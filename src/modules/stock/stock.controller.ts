@@ -1,18 +1,30 @@
 import { Request, Response } from 'express';
 import * as service from './stock.service';
 
-export const getStock = async (req: Request, res: Response) => {
+export const readStock = async (req: Request, res: Response) => {
   try {
-    const result = await service.getStock(req.body);
+    const result = await service.readStock(req.body);
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 };
 
+export const readStockCategories = async (req: Request, res: Response) => {
+  try {
+    const result = await service.readStockCategories();
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 export const createStock = async (req: Request, res: Response) => {
   try {
-    const result = await service.createStock(req.body);
+    const body = req.body;
+    const stockReq = body.stock;
+    const pricesReq = body.prices;
+    const result = await service.createStock(stockReq, pricesReq);
     res.status(201).json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -22,12 +34,15 @@ export const createStock = async (req: Request, res: Response) => {
 export const updateStock = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-
     if (!id || id.trimEnd() === "") {
       return res.status(400).json({ error: 'Invalid ID' });
     }
+    
+    const body = req.body;
+    const stockReq = body.stock;
+    const pricesReq = body.prices;
 
-    const result = await service.updateStock(id, req.body);
+    const result = await service.updateStock(id, stockReq, pricesReq);
     res.status(201).json({result});
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -116,7 +131,27 @@ export const deleteStockPricing = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const result = await service.deleteStockPricing(id);
+    res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const readStockWithPrice = async (req: Request, res: Response) => {
+  try {
+    const result = await service.readStockWithPrice(req.body);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export const readStockDetails = async (req: Request, res: Response) => {
+  try {
+    const stock_id = req.params.id as string;
+    const result = await service.readStockDetails(stock_id);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+}

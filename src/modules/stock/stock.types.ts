@@ -19,7 +19,7 @@ export interface StockMovement {
 export interface StockPricingHistory {
     history_id: number;
     stock_id: string;
-    effective_date: Date | string;
+    effective_date: string;
     buy_price: number;
     sell_price: number;
 }

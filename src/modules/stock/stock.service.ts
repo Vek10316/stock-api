@@ -1,22 +1,58 @@
 import * as repo from './stock.repository';
 import * as StockTypes from './stock.types';
 
-export const getStock = (data: any) => {
+export const readStock = (data: any) => {
   return repo.readStock(data as Partial<StockTypes.Stock>);
 }
 
-export const createStock = (data: any) => {
-  return repo.createNewStock({
-    stock_id: data.stock_id,
-    stock_description: data.stock_description ?? data.stock_id,
-    stock_uom: data.stock_uom ?? "KG",
-    stock_category: data.stock_category ?? undefined,
-    current_quantity: data.current_quantity ?? 1
+export const readStockCategories = () => {
+  return repo.readStockCategories();
+}
+
+export const createStock = async (stock: StockTypes.Stock, prices: Omit<StockTypes.StockPricingHistory, "history_id">) => {
+  const stockRes = await repo.createNewStock({
+    stock_id: stock.stock_id,
+    stock_description: stock.stock_description ?? stock.stock_id,
+    stock_uom: stock.stock_uom ?? "KG",
+    stock_category: stock.stock_category ?? undefined,
+    current_quantity: stock.current_quantity ?? 1
   });
+
+  const priceRes = await repo.updateStockPrice({
+    stock_id: stock.stock_id,
+    buy_price: prices.buy_price,
+    sell_price: prices.sell_price,
+    effective_date: prices.effective_date ?? new Date().toISOString(),
+  })
+
+  const response: {stock: StockTypes.Stock, prices: StockTypes.StockPricingHistory} = {
+    stock: stockRes,
+    prices: priceRes,
+  };
+
+  return response;
 };
 
-export const updateStock = (stock_id: string, data: any) => {
-  return repo.updateStock(stock_id, data);
+export const updateStock = async (stock_id: string, stock: Partial<StockTypes.Stock>, prices?: Omit<StockTypes.StockPricingHistory, "history_id">) => {
+  const stockRes = await repo.updateStock(stock_id, stock);
+  if (prices) {
+    await repo.updateStockPrice({
+      ...prices,
+      stock_id: stock.stock_id ?? stock_id,
+      effective_date: prices.effective_date ?? new Date().toISOString(),
+    })
+  }
+
+  const pricesRes = (await repo.readStockPricingHistory({stock_id})).sort((a, b) => {
+    return (new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime());
+  })[0]; // Return latest price
+
+  const response = {
+    stock: stockRes,
+    prices: pricesRes,
+  };
+
+  return response;
 };
 
 export const deleteStock = (stock_id: string) => {
@@ -55,3 +91,35 @@ export const updateStockPricing = (data: any) => {
 export const deleteStockPricing = (id: string) => {
   return repo.deleteStockPrice(id);
 }
+
+export const readStockWithPrice = async (data: Partial<StockTypes.Stock>): Promise<(StockTypes.Stock & {buy_price: number, sell_price: number})[]> => {
+  return await repo.readStockWithPrice(data);
+};
+
+export const deleteStockMovementByTransactionI = async (transact_id: string, direction: "IN" | "OUT", stock_id?: string) => {
+  const payload = stock_id?.trim() !== "" ? {transact_id, direction} : {transact_id, direction, stock_id};
+  const movements = await readStockMovement(payload);
+  const res = await repo.deleteStockMovementByTransactionID(transact_id, direction, stock_id);
+  
+  // Assuming stock_id is unique while sharing the same transact ID: Differentiate with stock_id
+  if (!movements) return true;
+
+  for (const d of movements) {
+    const qty = d.direction == "IN" ?
+    (d.quantity_change * -1) :
+    d.quantity_change
+    
+    await repo.updateStockQuantity(d.stock_id, qty);
+  };
+  return res;
+};
+
+export const readStockDetails = async (stock_id: string): Promise<{stock: StockTypes.Stock, priceHistory: StockTypes.StockPricingHistory[]}> => {
+  const stock = (await repo.readStock({stock_id}))[0];
+  const priceHistory = await repo.readStockPricingHistory({stock_id});
+  const res = {
+    stock,
+    priceHistory
+  };
+  return res;
+};

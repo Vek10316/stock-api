@@ -3,13 +3,16 @@ import * as controller from './supplier.controller';
 
 const router = Router();
 
-//Vehicles
+router.get('/all', controller.readSupplierWithVehicles)
+
 router.post('/vehicles/', controller.insertSupplierVehicle);
+router.get('/vehicles/:id', controller.getVehiclesBySupplierID);
 router.get('/vehicles/', controller.getSupplierVehicles);
+
 router.patch('/vehicles/:id', controller.updateSupplierVehicle);
 router.delete('/vehicles/:id', controller.deleteSupplierVehicle);
-
 router.post('/', controller.createSupplier);
+router.get('/:id', controller.getSupplierByID);
 router.get('/', controller.getSuppliers);
 router.patch('/:id', controller.updateSupplier);
 router.delete('/:id', controller.deleteSupplier);

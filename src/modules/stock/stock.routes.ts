@@ -4,7 +4,9 @@ import * as controller from './stock.controller';
 const router = Router();
 
 router.post('/inventory/', controller.createStock);
-router.get('/inventory/', controller.getStock);
+router.get('/inventory/categories/', controller.readStockCategories)
+router.get('/inventory/', controller.readStock);
+router.get('/inventory/:id', controller.readStockDetails)
 router.patch('/inventory/:id', controller.updateStock);
 router.delete('/inventory/:id', controller.deleteStock);
 
@@ -16,7 +18,7 @@ router.delete('/movement/:id', controller.deleteStockMovement);
 
 //Pricing
 router.get('/pricing/', controller.readStockPricingHistory);
-router.patch('/pricing/', controller.updateStockPricing);
+router.post('/pricing/', controller.updateStockPricing);
 router.delete('/pricing/:id', controller.deleteStockPricing);
 
 export default router;

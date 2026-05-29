@@ -25,13 +25,21 @@ export const updateLatestTransactionID = async (transaction_type: "PURCHASES" | 
     return await repo.updateLatestTransactionID(transaction_type, latest_transaction_id);
 };
 
-export const generateNextTransactionID = async (transaction_type: "PURCHASES" | "SALES"): Promise<string> => {
-    const latestID = await repo.readLatestTransactionID(transaction_type);
-    if (!latestID) {
-        throw new Error(`No active transaction settings found for type ${transaction_type}`);
-    }
-    const date: string = new Date()
-    .toISOString()
-    .replace(/[^a-zA-Z0-9]/g, "");
-    return `ERR-${new Date().toLocaleString(date)}`
+export const generateNextTransactionID = async ( transaction_type: "PURCHASES" | "SALES" ): Promise<string> => {
+    const latestID = await readLatestTransactionID(transaction_type);
+    const prefix = (await readTransactionSettings({ transaction_type, is_active: true }))?.[0]?.transaction_prefix || "";
+
+    // Always extract trailing digits
+    const match = latestID.match(/(\d+)$/);
+
+    const numericStr = match ? match[1] : "0";
+    const numericPart = parseInt(numericStr, 10);
+
+    const nextNumericPart = numericPart + 1;
+
+    const paddedNext = nextNumericPart
+        .toString()
+        .padStart(numericStr.length, "0");
+
+    return `${prefix}${paddedNext}`;
 };

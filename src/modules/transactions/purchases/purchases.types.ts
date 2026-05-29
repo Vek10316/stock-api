@@ -4,5 +4,5 @@ export type PurchasesTransactions = {
     transact_address: string;
     transact_date: Date;
     transact_total_amount: number;
-    transact_status: string;
+    transact_status: "UNPAID" | "PARTIAL" | "PAID";
 };

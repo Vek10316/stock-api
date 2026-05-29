@@ -19,8 +19,13 @@ export const splitObjectEntries = async (o: Object): Promise<ObjectEntries> => {
   return { keys, values, types };
 };
 
-export const buildSqlConditions = async (o: Object, sort?: SqlSort): Promise<string> => {
+export const buildSqlConditions = async (o: Object, options?: {prefix?: string, sort?: SqlSort}): Promise<string> => {
   let conditions = "";
+  let prefix = options?.prefix ?? "";
+  if (prefix.trim() !== "") {
+    prefix = prefix.trim();
+    if (!prefix.endsWith(".")) prefix += "."
+  }
   if (o != undefined) {
     const entries = await splitObjectEntries(o);
     for (var i = 0; i < entries.keys.length; i++) {
@@ -28,17 +33,20 @@ export const buildSqlConditions = async (o: Object, sort?: SqlSort): Promise<str
         `${entries.values[i]}` :
         `'${entries.values[i]}'`
       conditions += (i+1 <= 1) ?
-        ` WHERE ${entries.keys[i]} = ${valueToString}` :
-        ` AND ${entries.keys[i]} = ${valueToString}`;
+        ` WHERE ${prefix}${entries.keys[i]} = ${valueToString}` :
+        ` AND ${prefix}${entries.keys[i]} = ${valueToString}`;
     }
   }
-  if (sort) {
-    conditions += ` ORDER BY ${sort.column} ${sort.direction ?? "ASC"}`;
+  if (options?.sort) {
+    conditions += ` ORDER BY ${options.sort.column} ${options.sort.direction ?? "ASC"}`;
   }
   return conditions;
 };
 
-export const buildSqlInsertQuery = async (table: string, insertData: Object, request?: sql.Request): Promise<string> => {
+export const buildSqlInsertQuery = async (table: string, insertData: Object, transaction: sql.Transaction, request: sql.Request): Promise<string> => {
+  if (!request) {
+    request = new sql.Request(transaction);
+  }
   const entries = await splitObjectEntries(insertData);
   const k = entries.keys;
   const v = entries.values;
@@ -47,17 +55,19 @@ export const buildSqlInsertQuery = async (table: string, insertData: Object, req
     parameters.push(`@${c}`);
   });
 
-  if (request) {
-    for (var i = 0; i < k.length; i++) {
-      request.input(k[i], v[i]); 
-    }
+  for (var i = 0; i < k.length; i++) {
+    request.input(k[i], v[i]);
   }
 
   const query = `INSERT INTO ${table} (${entries.keys.join(", ")}) VALUES (${parameters.join(", ")});`;
   return query;
 };
 
-export const buildSqlUpdateQuery = async (table: string, updateData: Object, condition: Object, request?: sql.Request): Promise<string> => {
+export const buildSqlUpdateQuery = async (table: string, updateData: Object, condition: Object, transaction: sql.Transaction, request?: sql.Request): Promise<string> => {
+  if (!request) {
+      request = new sql.Request(transaction);
+  }
+  
   const entries = await splitObjectEntries(updateData);
   const k = entries.keys;
   const v = entries.values;
@@ -66,10 +76,8 @@ export const buildSqlUpdateQuery = async (table: string, updateData: Object, con
     parameters.push(`${k} = @${k}`); 
   });
 
-  if (request) {
-    for (var i = 0; i < k.length; i++) {
-      request.input(k[i], v[i]);
-    }
+  for (var i = 0; i < k.length; i++) {
+    request.input(k[i], v[i]);
   }
 
   const c = await buildSqlConditions(condition);
