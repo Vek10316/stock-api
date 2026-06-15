@@ -3,15 +3,15 @@ import { getPool } from "../../../config/db";
 import { Supplier, SupplierVehicles } from "./supplier.types";
 import * as gh from "../../global/globalHelpers";
 
-export const readSuppliers = async (data: Partial<Supplier>, sort?: gh.SqlSort): Promise<Supplier[]> => {
+export const readSuppliers = async (data?: Partial<Supplier>, sort?: gh.SqlSort): Promise<Supplier[]> => {
     const pool = await getPool();
     try {
         let query = "SELECT * FROM master_supplier";
-        query += await gh.buildSqlConditions(data, {sort: sort ?? {column: "supplier_name"}});
+        query += await gh.buildSqlConditions(data ?? {}, { sort: sort ?? { column: "supplier_name" } });
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         throw err;
     }
 };
@@ -27,11 +27,11 @@ export const createSupplier = async (data: Supplier): Promise<Supplier> => {
         await transaction.commit();
         return data;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             transaction.rollback();
         } catch (rollbackErr) {
-            console.error(`Rollback failed: ${rollbackErr}`, err);
+            console.error(`Rollback failed: `, rollbackErr);
         }
         throw err;
     }
@@ -43,16 +43,16 @@ export const updateSupplier = async (id: string, data: Partial<Supplier>): Promi
     try {
         await transaction.begin();
         const request = new sql.Request(transaction);
-        let query = await gh.buildSqlUpdateQuery("master_supplier", data, { supplier_id: id }, transaction, request);
-        const result = await request.query(query);
+        let query = await gh.buildSqlUpdateQuery("master_supplier", data, { supplier_id: id }, transaction, request)
+        await request.query(query);
         await transaction.commit();
-        return (await readSuppliers({supplier_id: id}))[0];
+        return (await readSuppliers({ supplier_id: id }))[0];
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             transaction.rollback();
         } catch (rollbackErr) {
-            console.error(`Rollback failed: ${rollbackErr}`, err);
+            console.error(`Rollback failed: `, rollbackErr);
         }
         throw err;
     }
@@ -68,17 +68,17 @@ export const deleteSupplier = async (id: string): Promise<boolean> => {
         await transaction.commit();
         return result.rowsAffected.length > 0;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             transaction.rollback();
         } catch (rollbackErr) {
-            console.error(`Rollback failed: ${rollbackErr}`, err);
+            console.error(`Rollback failed: `, rollbackErr);
         }
         throw err;
     }
 };
 
-export const readSupplierVehicles = async (data: Partial<SupplierVehicles>): Promise<SupplierVehicles[]> =>  {
+export const readSupplierVehicles = async (data: Partial<SupplierVehicles>): Promise<SupplierVehicles[]> => {
     const pool = await getPool();
     try {
         let query = "SELECT * FROM supplier_vehicles";
@@ -86,7 +86,7 @@ export const readSupplierVehicles = async (data: Partial<SupplierVehicles>): Pro
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         throw err;
     }
 };
@@ -102,11 +102,11 @@ export const insertSupplierVehicle = async (data: Omit<SupplierVehicles, "vehicl
         await transaction.commit();
         return data;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             transaction.rollback();
         } catch (rollbackErr) {
-            console.error(`Rollback failed: ${rollbackErr}`, err);
+            console.error(`Rollback failed: `, rollbackErr);
         }
         throw err;
     }
@@ -118,16 +118,16 @@ export const updateSupplierVehicle = async (vehicle_id: number, data: Partial<Su
     try {
         await transaction.begin();
         const request = new sql.Request(transaction);
-        const query = await gh.buildSqlUpdateQuery("supplier_vehicles", data, {vehicle_id}, transaction, request);
+        const query = await gh.buildSqlUpdateQuery("supplier_vehicles", data, { vehicle_id }, transaction, request);
         await request.query(query);
         await transaction.commit();
-        return (await readSupplierVehicles({vehicle_id}))[0];
+        return (await readSupplierVehicles({ vehicle_id }))[0];
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             transaction.rollback();
         } catch (rollbackErr) {
-            console.error(`Rollback failed: ${rollbackErr}`, err);
+            console.error(`Rollback failed: `, rollbackErr);
         }
         throw err;
     }
@@ -143,11 +143,11 @@ export const deleteSupplierVehicle = async (vehicle_id: number): Promise<boolean
         await transaction.commit();
         return result.rowsAffected.length > 0;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             transaction.rollback();
         } catch (rollbackErr) {
-            console.error(`Rollback failed: ${rollbackErr}`, err);
+            console.error(`Rollback failed: `, rollbackErr);
         }
         throw err;
     }
@@ -166,7 +166,7 @@ export const readSuppliersWithVehicles = async (data: Partial<Supplier>): Promis
         FROM master_supplier AS M
         LEFT JOIN supplier_vehicles AS V
         ON M.supplier_id = V.supplier_id`;
-    query += await gh.buildSqlConditions(data, {prefix: "M"});
+    query += await gh.buildSqlConditions(data, { prefix: "M" });
     const result = (await pool.query(query)).recordset;
     const grouped = new Map<string, {
         supplier: Supplier;

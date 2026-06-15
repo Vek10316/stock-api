@@ -3,18 +3,18 @@ import { getPool } from '../../../config/db';
 import * as gh from '../../global/globalHelpers';
 import type { SqlSort } from '../../global/globalHelpers';
 import type { PurchasesTransactions } from './purchases.types';
-import type { TransactionDetails, TransactionOutput } from '../shared.transactions.types';
+import type { TransactionDetails, PurchasesTransactionOutput } from '../shared.transactions.types';
 import type { Supplier, SupplierVehicles } from '../../clients/supplier/supplier.types';
 
-export const readPurchasesTransactions = async (filter: Partial<PurchasesTransactions>, sort?: SqlSort): Promise<PurchasesTransactions[]> => {
+export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransactions>, sort?: SqlSort): Promise<PurchasesTransactions[]> => {
     const pool = await getPool();
     try {
         let query = "SELECT * FROM purchases_transactions";
-        query += await gh.buildSqlConditions(filter, {sort});
+        query += await gh.buildSqlConditions(filter ?? {}, {sort});
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         throw err;
     }
 };
@@ -36,7 +36,7 @@ export const insertPurchasesTransaction = async (data: PurchasesTransactions, de
         await transaction.commit();
         return data;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {
@@ -65,7 +65,7 @@ export const updatePurchasesTransaction = async (transact_id: string, data: Part
         await transaction.commit();
         return (await readPurchasesTransactions({transact_id}))[0];
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {
@@ -88,7 +88,7 @@ export const deletePurchasesTransaction = async (id: string): Promise<boolean> =
         await transaction.commit();
         return result.rowsAffected.length > 0;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {
@@ -135,7 +135,7 @@ export const getPurchasesDetailIDs = async (transact_id: string): Promise<string
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         throw err;
     }
 };

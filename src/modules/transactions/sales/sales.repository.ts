@@ -3,19 +3,19 @@ import { sqlConfig } from '../../../config/db';
 import * as gh from '../../global/globalHelpers';
 import type { SqlSort } from '../../global/globalHelpers';
 import type { SalesTransactions } from './sales.types';
-import type { TransactionDetails, TransactionOutput } from '../shared.transactions.types';
+import type { TransactionDetails, PurchasesTransactionOutput } from '../shared.transactions.types';
 import type * as StockTypes from '../../stock/stock.types';
 import { insertStockMovement, deleteStockMovement, readStockMovement } from '../../stock/stock.repository';
 
-export const readSalesTransactions = async (data: Partial<SalesTransactions>, showDetails: boolean, sort?: SqlSort): Promise<TransactionOutput[]> => {
+export const readSalesTransactions = async (data: Partial<SalesTransactions>, showDetails: boolean, sort?: SqlSort): Promise<PurchasesTransactionOutput[]> => {
     const conn = await sql.connect(sqlConfig);
     try {
         let query = "SELECT * FROM sales_transactions";
         query += gh.buildSqlConditions(data, sort);
         let headers: SalesTransactions[] = (await conn.query(query)).recordset;
-        let result: TransactionOutput[] = [];
+        let result: PurchasesTransactionOutput[] = [];
         headers.forEach(async (h) => {
-            const newRow: TransactionOutput = {
+            const newRow: PurchasesTransactionOutput = {
                 header: h,
                 details: showDetails ? await readSalesDetails(h.transact_id) : undefined
             };
@@ -24,7 +24,7 @@ export const readSalesTransactions = async (data: Partial<SalesTransactions>, sh
 
         return result;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         throw err;
     } finally {
         await conn.close();
@@ -56,7 +56,7 @@ export const insertSalesTransaction = async (data: SalesTransactions, details: T
         
         return data;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {
@@ -66,7 +66,7 @@ export const insertSalesTransaction = async (data: SalesTransactions, details: T
     }
 };
 
-export const updateSalesTransaction = async (transact_id: string, data: SalesTransactions, details: TransactionDetails[]): Promise<TransactionOutput> => {
+export const updateSalesTransaction = async (transact_id: string, data: SalesTransactions, details: TransactionDetails[]): Promise<PurchasesTransactionOutput> => {
     const conn = await sql.connect(sqlConfig);
     let transaction = new sql.Transaction(conn);
     try {
@@ -93,7 +93,7 @@ export const updateSalesTransaction = async (transact_id: string, data: SalesTra
         }
         return (await readSalesTransactions({transact_id}, true))[0];
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {
@@ -118,7 +118,7 @@ export const deleteSalesTransaction = async (id: string): Promise<boolean> => {
         await deleteSalesDetails(id);
         return result.rowsAffected.length > 0;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {
@@ -168,7 +168,7 @@ export const getSalesDetailIDs = async (transact_id: string): Promise<string[]> 
         const result = await conn.query(query);
         return result.recordset;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         throw err;
     }
 };

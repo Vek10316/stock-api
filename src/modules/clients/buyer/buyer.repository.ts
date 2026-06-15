@@ -12,7 +12,7 @@ export const readBuyers = async (data: Partial<Buyer>, sort?: gh.SqlSort): Promi
         const result = await conn.query(query);
         return result.recordset;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         throw err;
     } finally {
         conn.close();
@@ -30,7 +30,7 @@ export const createBuyer = async (data: Buyer): Promise<Buyer> => {
         await transaction.commit();
         return data;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             transaction.rollback();
         } catch (rollbackErr) {
@@ -53,7 +53,7 @@ export const updateBuyer = async (id: string, data: Partial<Buyer>): Promise<Buy
         await transaction.commit();
         return (await readBuyers({buyer_id: id}))[0];
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             transaction.rollback();
         } catch (rollbackErr) {
@@ -75,7 +75,7 @@ export const deleteBuyer = async (id: string): Promise<boolean> => {
         await transaction.commit();
         return result.rowsAffected.length > 0;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             transaction.rollback();
         } catch (rollbackErr) {
@@ -95,7 +95,7 @@ export const readBuyerVehicles = async (data: Partial<BuyerVehicles>): Promise<B
         const result = await conn.query(query);
         return result.recordset;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         throw err;
     } finally {
         conn.close();
@@ -112,7 +112,7 @@ export const insertBuyerVehicle = async (data: BuyerVehicles): Promise<BuyerVehi
         await request.query(query);
         return data;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             transaction.rollback();
         } catch (rollbackErr) {
@@ -135,7 +135,7 @@ export const updateBuyerVehicle = async (vehicle_id: number, data: Partial<Buyer
         await transaction.commit();
         return (await readBuyerVehicles({vehicle_id}))[0];
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             transaction.rollback();
         } catch (rollbackErr) {
@@ -157,7 +157,7 @@ export const deleteBuyerVehicle = async (vehicle_id: number): Promise<boolean> =
         await transaction.commit();
         return result.rowsAffected.length > 0;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             transaction.rollback();
         } catch (rollbackErr) {

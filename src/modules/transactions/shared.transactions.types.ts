@@ -10,7 +10,7 @@ export type TransactionDetails = {
     transact_subtotal: number;
 };
 
-export type TransactionOutput = {
-    header:  PurchasesTransactions | SalesTransactions;
+export type PurchasesTransactionOutput = {
+    header:  PurchasesTransactions;
     details?: TransactionDetails[];
 };

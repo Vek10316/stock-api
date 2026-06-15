@@ -22,8 +22,8 @@ export const createSupplier = async (supplier: Supplier, vehicles: Omit<Supplier
     }
 };
 
-export const updateSupplier = async (supplier_id: string, supplier: Partial<Supplier>, vehicles: Omit<SupplierVehicles, "vehicle_id">[]): Promise<{details: Supplier, vehicles: SupplierVehicles[]}> => {
-    const detailsRes = await repo.updateSupplier(supplier_id, supplier);
+export const updateSupplier = async (supplier_id: string, supplier: Partial<Supplier>, vehicles: Omit<SupplierVehicles, "vehicle_id">[]): Promise<{supplier: Supplier, vehicles: SupplierVehicles[]}> => {
+    const supplierRes = await repo.updateSupplier(supplier_id, supplier);
     const vehicleIDs = (await repo.readSupplierVehicles({supplier_id})).map(s => s.vehicle_id);
     vehicleIDs.forEach(async v => {
         await repo.deleteSupplierVehicle(v)
@@ -36,7 +36,7 @@ export const updateSupplier = async (supplier_id: string, supplier: Partial<Supp
     const vehiclesRes = await repo.readSupplierVehicles({supplier_id});
 
     const response = {
-        details: detailsRes,
+        supplier: supplierRes,
         vehicles: vehiclesRes,
     };
 

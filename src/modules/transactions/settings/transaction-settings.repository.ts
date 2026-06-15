@@ -30,7 +30,7 @@ export const createNewTransactionSetting = async (settings: Omit<TransactionSett
         return settings as TransactionSettings;
         // return (await readTransactionSettings({ transaction_type: settings.transaction_type })) as TransactionSettings;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {
@@ -51,7 +51,7 @@ export const updateTransactionSettings = async (id: number, settings: Partial<Tr
         await transaction.commit();
         return result.rowsAffected.length > 0;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {
@@ -72,7 +72,7 @@ export const updateLatestTransactionID = async (transaction_type: "PURCHASES" | 
         await transaction.commit();
         return result.rowsAffected.length > 0;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {
@@ -112,7 +112,7 @@ export const switchActiveTransactionSetting = async (transaction_type: "PURCHASE
         await transaction.commit();
         return true;
     } catch (err) {
-        console.error(`Unhandled exception: ${err}`, err);
+        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {

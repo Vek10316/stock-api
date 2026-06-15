@@ -13,7 +13,7 @@ export const getLatestTransactionID = async (req: Request, res: Response) => {
             res.status(404).json({ error: `No active transaction settings found for type ${transaction_type}` });
         }
     } catch (err) {
-        console.error(`Error in getLatestTransactionID: ${err}`, err);
+        console.error(`Error in getLatestTransactionID: `, err);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
@@ -25,7 +25,7 @@ export const getTransactionSettings = async (req: Request, res: Response) => {
         const result = await service.readTransactionSettings(filters);
         res.json(result);
     } catch (err) {
-        console.error(`Error in getTransactionSettings: ${err}`, err);
+        console.error(`Error in getTransactionSettings: `, err);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
