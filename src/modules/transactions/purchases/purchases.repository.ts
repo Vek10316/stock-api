@@ -3,7 +3,7 @@ import { getPool } from '../../../config/db';
 import * as gh from '../../global/globalHelpers';
 import type { SqlSort } from '../../global/globalHelpers';
 import type { PurchasesTransactions } from './purchases.types';
-import type { TransactionDetails, PurchasesTransactionOutput } from '../shared.transactions.types';
+import type { TransactionDetails } from '../shared.transactions.types';
 import type { Supplier, SupplierVehicles } from '../../clients/supplier/supplier.types';
 
 export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransactions>, sort?: SqlSort): Promise<PurchasesTransactions[]> => {

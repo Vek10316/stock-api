@@ -10,9 +10,23 @@ export const getBuyers = async (req: Request, res: Response) => {
     }
 };
 
+export const getBuyerByID = async (req: Request, res: Response) => {
+    try {
+        const buyer_id = req.params.id as string;
+        const result = (await service.readBuyers({buyer_id}))[0];
+        res.json(result);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+}
+
 export const createBuyer = async (req: Request, res: Response) => {
     try {
-        const result = await service.createBuyer(req.body);
+        const body = req.body;
+        console.log("New insert buyer request: ", body);
+        const buyer = body.buyer;
+        const vehicles = body.vehicles;
+        const result = await service.createBuyer(buyer, vehicles);
         res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
@@ -22,10 +36,13 @@ export const createBuyer = async (req: Request, res: Response) => {
 export const updateBuyer = async (req: Request, res: Response) => {
     try {
         const id = req.params.id as string;
+        const body = req.body;
+        const buyer = body.buyer;
+        const vehicles = body.vehicles;
         if (!id || id.trimEnd() === "") {
             return res.status(400).json({ error: `Invalid ID` });
         }
-        const result = await service.updateBuyer(id, req.body);
+        const result = await service.updateBuyer(id, buyer, vehicles);
         res.status(200).json({result});
     } catch (err: any) {
         res.status(500).json({ error: err.message });
@@ -53,6 +70,16 @@ export const getBuyerVehicles = async (req: Request, res: Response) => {
     }
 };
 
+export const getVehiclesByBuyerID = async (req: Request, res: Response) => {
+    try {
+        const buyer_id = req.params.id as string;
+        const result = await service.readBuyerVehicles({buyer_id});
+        res.json(result);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+}
+
 export const insertBuyerVehicle = async (req: Request, res: Response) => {
     try {
         const result = await service.insertBuyerVehicle(req.body);
@@ -68,7 +95,7 @@ export const updateBuyerVehicle = async (req: Request, res: Response) => {
         if (!id || id.trimEnd() === "") {
             return res.status(400).json({ error: `Invalid ID` });
         }
-        const result = await service.updateBuyerVehicle(id, req.body);
+        const result = await service.updateBuyerVehicle(Number.parseInt(id), req.body);
         res.status(200).json({result});
     } catch (err: any) {
         res.status(500).json({ error: err.message });
@@ -81,7 +108,16 @@ export const deleteBuyerVehicle = async (req: Request, res: Response) => {
         if (!id || id.trimEnd() === "") {
             return res.status(400).json({ error: `Invalid ID` });
         }
-        const deleted = await service.deleteBuyerVehicle(id);
+        const deleted = await service.deleteBuyerVehicle(Number.parseInt(id));
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+}
+
+export const readBuyerWithVehicles = async (req: Request, res: Response) => {
+    try {
+        const result = await service.readBuyerWithVehicles(req.body);
+        res.status(200).json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
     }
