@@ -10,7 +10,7 @@ export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransa
     const pool = await getPool();
     try {
         let query = "SELECT * FROM purchases_transactions";
-        query += await gh.buildSqlConditions(filter ?? {}, {sort});
+        query += await gh.buildSqlConditions(filter ?? {}, { sort });
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
@@ -28,11 +28,11 @@ export const insertPurchasesTransaction = async (data: PurchasesTransactions, de
         const query = await gh.buildSqlInsertQuery("purchases_transactions", data, transaction, request);
 
         await request.query(query);
-        
+
         for (const d of details) {
             await insertPurchasesDetails(d, transaction);
         }
-        
+
         await transaction.commit();
         return data;
     } catch (err) {
@@ -52,18 +52,18 @@ export const updatePurchasesTransaction = async (transact_id: string, data: Part
     try {
         await transaction.begin();
         const request = new sql.Request(transaction);
-        const query = await gh.buildSqlUpdateQuery("purchases_transactions", data, {transact_id}, transaction, request);
+        const query = await gh.buildSqlUpdateQuery("purchases_transactions", data, { transact_id }, transaction, request);
         await request.query(query);
-        
+
         // Delete then re-insert details. Update does not delete removed details. + Simplicity
         await deletePurchasesDetails(transact_id, transaction, request);
-        
+
         for (const d of details) {
             await insertPurchasesDetails(d, transaction, request);
         }
-        
+
         await transaction.commit();
-        return (await readPurchasesTransactions({transact_id}))[0];
+        return (await readPurchasesTransactions({ transact_id }))[0];
     } catch (err) {
         console.error(`Unhandled exception: `, err);
         try {
@@ -113,7 +113,7 @@ export const insertPurchasesDetails = async (data: Omit<TransactionDetails, "det
 };
 
 export const updatePurchaseDetails = async (detail_id: number, updateData: Partial<TransactionDetails>, transaction: sql.Transaction): Promise<boolean> => {
-    const query = await gh.buildSqlUpdateQuery("purchases_transactions_details", updateData, {detail_id}, transaction);
+    const query = await gh.buildSqlUpdateQuery("purchases_transactions_details", updateData, { detail_id }, transaction);
     const request = new sql.Request(transaction);
     const result = await request.query(query);
     return result.rowsAffected.length > 0;
@@ -141,11 +141,12 @@ export const getPurchasesDetailIDs = async (transact_id: string): Promise<string
 };
 
 export const readFullPurchaseDetails = async (filter?: Partial<PurchasesTransactions>):
-Promise<{header: PurchasesTransactions,
-    details: TransactionDetails[],
-    supplier: Supplier,
-    vehicles: SupplierVehicles[],
-}[]> => {
+    Promise<{
+        header: PurchasesTransactions,
+        details: TransactionDetails[],
+        supplier: Supplier,
+        vehicles: SupplierVehicles[],
+    }[]> => {
     const pool = await getPool();
     let query = await `SELECT P.*,
         -- DETAILS
@@ -175,7 +176,7 @@ Promise<{header: PurchasesTransactions,
         supplier: Supplier;
         vehicles: SupplierVehicles[];
     }>();
-    
+
     for (const row of result) {
         if (!response.has(row.transact_id)) {
             response.set(row.transact_id, {
@@ -221,9 +222,39 @@ Promise<{header: PurchasesTransactions,
     return Array.from(response.values());
 }
 
-export const getPurchasedTotalQuantity = async (transact_id: string): Promise<number> =>{
+export const getPurchasedTotalQuantity = async (transact_id: string): Promise<number> => {
     const pool = await getPool();
     const query = `SELECT SUM(item_quantity) as total_quantity FROM purchases_transactions_details WHERE transact_id = '${transact_id}'`;
-    const result: {total_quantity: number} = (await pool.query(query)).recordset[0];
+    const result: { total_quantity: number } = (await pool.query(query)).recordset[0];
     return result.total_quantity;
 };
+
+export const readPurchasesByDateRange = async (startDate: Date, endDate: Date): Promise<PurchasesTransactions[]> => {
+    const pool = await getPool();
+    const query = `SELECT * FROM purchases_transactions WHERE transact_date BETWEEN ${startDate.toLocaleDateString("en-CA")} AND ${endDate.toLocaleDateString("en-CA")}`;
+    const result = (await pool.query(query)).recordset;
+    return result;
+};
+
+export const readPurchasesTotalByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<PurchasesTransactions, "transact_total_amount">> => {
+    const pool = await getPool();
+    const start = startDate.toLocaleDateString('en-CA');
+    const end = endDate.toLocaleDateString('en-CA');
+    const query = `SELECT SUM(transact_total_amount) as transact_total_amount FROM purchases_transactions WHERE transact_date BETWEEN '${start}' AND '${end}'`
+    const result = (await pool.query(query)).recordset[0].transact_total_amount as Pick<PurchasesTransactions, "transact_total_amount">;
+    return result;
+}
+
+export const readPurchasedItemsByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
+    const pool = await getPool();
+    const start = startDate.toLocaleDateString('en-CA');
+    const end = endDate.toLocaleDateString('en-CA');
+    const query = `SELECT stock_id, SUM(item_quantity) AS item_quantity FROM purchases_transactions_details WHERE transact_id IN (` +
+        `SELECT transact_id FROM purchases_transactions WHERE transact_date BETWEEN '${start}' AND '${end}'` +
+        `) GROUP BY stock_id;`;
+    const result = (await pool.query(query)).recordset as TransactionDetails[];
+    return result.map(res => ({
+        stock_id: res.stock_id,
+        item_quantity: res.item_quantity
+    }));
+}

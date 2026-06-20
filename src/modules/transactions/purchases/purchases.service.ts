@@ -136,3 +136,15 @@ export const readPurchasesDetails = async (transact_id: string): Promise<{ heade
     };
     return response;
 }
+
+export const readPurchasesByDateRange = async (startDate: Date, endDate: Date): Promise<PurchasesTransactions[]> => {
+    return await repo.readPurchasesByDateRange(startDate, endDate);
+};
+
+export const readPurchasesTotalByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<PurchasesTransactions, "transact_total_amount">> => {
+    return await repo.readPurchasesTotalByDateRange(startDate, endDate);
+}
+
+export const readPurchasedItemsByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
+    return await repo.readPurchasedItemsByDateRange(startDate, endDate);
+};

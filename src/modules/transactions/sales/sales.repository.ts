@@ -10,7 +10,7 @@ export const readSalesTransactions = async (filter?: Partial<SalesTransactions>,
     const pool = await getPool();
     try {
         let query = "SELECT * FROM sales_transactions";
-        query += await gh.buildSqlConditions(filter ?? {}, {sort});
+        query += await gh.buildSqlConditions(filter ?? {}, { sort });
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
@@ -28,11 +28,11 @@ export const insertSalesTransaction = async (data: SalesTransactions, details: O
         const query = await gh.buildSqlInsertQuery("sales_transactions", data, transaction, request);
 
         await request.query(query);
-        
+
         for (const d of details) {
             await insertSalesDetails(d, transaction);
         }
-        
+
         await transaction.commit();
         return data;
     } catch (err) {
@@ -52,18 +52,18 @@ export const updateSalesTransaction = async (transact_id: string, data: Partial<
     try {
         await transaction.begin();
         const request = new sql.Request(transaction);
-        const query = await gh.buildSqlUpdateQuery("sales_transactions", data, {transact_id}, transaction, request);
+        const query = await gh.buildSqlUpdateQuery("sales_transactions", data, { transact_id }, transaction, request);
         await request.query(query);
-        
+
         // Delete then re-insert details. Update does not delete removed details. + Simplicity
         await deleteSalesDetails(transact_id, transaction, request);
-        
+
         for (const d of details) {
             await insertSalesDetails(d, transaction, request);
         }
-        
+
         await transaction.commit();
-        return (await readSalesTransactions({transact_id}))[0];
+        return (await readSalesTransactions({ transact_id }))[0];
     } catch (err) {
         console.error(`Unhandled exception: `, err);
         try {
@@ -112,8 +112,8 @@ export const insertSalesDetails = async (data: Omit<TransactionDetails, "detail_
     return result.rowsAffected.length > 0;
 };
 
-export const updateSaleDetails = async (detail_id: number, updateData: Partial<TransactionDetails>, transaction: sql.Transaction): Promise<boolean> => {
-    const query = await gh.buildSqlUpdateQuery("sales_transactions_details", updateData, {detail_id}, transaction);
+export const updatePurchaseDetails = async (detail_id: number, updateData: Partial<TransactionDetails>, transaction: sql.Transaction): Promise<boolean> => {
+    const query = await gh.buildSqlUpdateQuery("sales_transactions_details", updateData, { detail_id }, transaction);
     const request = new sql.Request(transaction);
     const result = await request.query(query);
     return result.rowsAffected.length > 0;
@@ -141,11 +141,12 @@ export const getSalesDetailIDs = async (transact_id: string): Promise<string[]> 
 };
 
 export const readFullSaleDetails = async (filter?: Partial<SalesTransactions>):
-Promise<{header: SalesTransactions,
-    details: TransactionDetails[],
-    buyer: Buyer,
-    vehicles: BuyerVehicles[],
-}[]> => {
+    Promise<{
+        header: SalesTransactions,
+        details: TransactionDetails[],
+        buyer: Buyer,
+        vehicles: BuyerVehicles[],
+    }[]> => {
     const pool = await getPool();
     let query = await `SELECT P.*,
         -- DETAILS
@@ -156,7 +157,7 @@ Promise<{header: SalesTransactions,
         S.buyer_id_type, S.buyer_name, S.buyer_address,
         S.buyer_phone, S.buyer_email, S.buyer_tin,
 
-        -- BUYER VEHICLES
+        -- SUPPLIER VEHICLES
         V.vehicle_id, V.plate_no
 
         FROM sales_transactions AS P
@@ -175,7 +176,7 @@ Promise<{header: SalesTransactions,
         buyer: Buyer;
         vehicles: BuyerVehicles[];
     }>();
-    
+
     for (const row of result) {
         if (!response.has(row.transact_id)) {
             response.set(row.transact_id, {
@@ -221,9 +222,39 @@ Promise<{header: SalesTransactions,
     return Array.from(response.values());
 }
 
-export const getSaledTotalQuantity = async (transact_id: string): Promise<number> =>{
+export const getSoldTotalQuantity = async (transact_id: string): Promise<number> => {
     const pool = await getPool();
     const query = `SELECT SUM(item_quantity) as total_quantity FROM sales_transactions_details WHERE transact_id = '${transact_id}'`;
-    const result: {total_quantity: number} = (await pool.query(query)).recordset[0];
+    const result: { total_quantity: number } = (await pool.query(query)).recordset[0];
     return result.total_quantity;
 };
+
+export const readSalesByDateRange = async (startDate: Date, endDate: Date): Promise<SalesTransactions[]> => {
+    const pool = await getPool();
+    const query = `SELECT * FROM sales_transactions WHERE transact_date BETWEEN ${startDate.toLocaleDateString("en-CA")} AND ${endDate.toLocaleDateString("en-CA")}`;
+    const result = (await pool.query(query)).recordset;
+    return result;
+};
+
+export const readSalesTotalByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<SalesTransactions, "transact_total_amount">> => {
+    const pool = await getPool();
+    const start = startDate.toLocaleDateString('en-CA');
+    const end = endDate.toLocaleDateString('en-CA');
+    const query = `SELECT SUM(transact_total_amount) as transact_total_amount FROM sales_transactions WHERE transact_date BETWEEN '${start}' AND '${end}'`
+    const result = (await pool.query(query)).recordset[0].transact_total_amount as Pick<SalesTransactions, "transact_total_amount">;
+    return result;
+}
+
+export const readSoldItemsByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
+    const pool = await getPool();
+    const start = startDate.toLocaleDateString('en-CA');
+    const end = endDate.toLocaleDateString('en-CA');
+    const query = `SELECT stock_id, SUM(item_quantity) AS item_quantity FROM sales_transactions_details WHERE transact_id IN (` +
+        `SELECT transact_id FROM sales_transactions WHERE transact_date BETWEEN '${start}' AND '${end}'` +
+        `) GROUP BY stock_id;`;
+    const result = (await pool.query(query)).recordset as TransactionDetails[];
+    return result.map(res => ({
+        stock_id: res.stock_id,
+        item_quantity: res.item_quantity
+    }));
+}

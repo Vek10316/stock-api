@@ -14,7 +14,7 @@ export const readSalesTransactions = async (filter: Partial<SalesTransactions>, 
     let response = new Map<string, (SalesTransactions & { buyer_name: string, total_quantity: number })>();
     for (const row of sales) {
         const buyerName = await readBuyerName(row.buyer_id);
-        const totalQuantity = await repo.getSaledTotalQuantity(row.transact_id);
+        const totalQuantity = await repo.getSoldTotalQuantity(row.transact_id);
         response.set(row.transact_id, {
             ...row,
             buyer_name: buyerName ?? "Unknown Buyer",
@@ -43,7 +43,7 @@ export const insertSalesTranscation = async (header: Omit<SalesTransactions, "tr
     // Move current quantity calculation & updateStockQuantity here
 
     const result = await repo.insertSalesTransaction(payload, payloadDetails);
-    await updateLatestTransactionID("SALES", result.transact_id);
+    await updateLatestTransactionID("PURCHASES", result.transact_id);
     let transact = await repo.readSalesTransactions({ transact_id: result.transact_id });
     const transactDetails = await repo.readSalesDetails(result.transact_id);
     const buyerName = await readBuyerName(result.buyer_id);
@@ -104,7 +104,7 @@ export const deleteSalesTransaction = async (id: string) => {
 }
 
 export const generateNewTransactionHeaders = async (): Promise<{ transact_id: string, transact_address: string, transact_date: Date }> => {
-    const nextTransactID = await generateNextTransactionID("SALES");
+    const nextTransactID = await generateNextTransactionID("PURCHASES");
     const header = {
         transact_id: nextTransactID,
         transact_address: "22, Jalan Seroja 42, Taman Johor Jaya, 81100 Johor Bahru, Johor",
@@ -136,3 +136,15 @@ export const readSalesDetails = async (transact_id: string): Promise<{ header: S
     };
     return response;
 }
+
+export const readSalesByDateRange = async (startDate: Date, endDate: Date): Promise<SalesTransactions[]> => {
+    return await repo.readSalesByDateRange(startDate, endDate);
+};
+
+export const readSalesTotalByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<SalesTransactions, "transact_total_amount">> => {
+    return await repo.readSalesTotalByDateRange(startDate, endDate);
+}
+
+export const readSoldItemsByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
+    return await repo.readSoldItemsByDateRange(startDate, endDate);
+};

@@ -9,6 +9,16 @@ export type ObjectEntries = {
 export type SqlSort = {
     column: string;
     direction?: "ASC" | "DESC";
+};
+
+export type SqlConditionOptions = {
+    prefix?: string | undefined;
+    dateRange?: {
+        column: string,
+        startDate: Date,
+        endDate: Date
+    };
+    sort?: SqlSort | undefined;
 }
 
 export const splitObjectEntries = async (o: Object): Promise<ObjectEntries> => {
@@ -19,7 +29,7 @@ export const splitObjectEntries = async (o: Object): Promise<ObjectEntries> => {
     return { keys, values, types };
 };
 
-export const buildSqlConditions = async (o: Object, options?: { prefix?: string, sort?: SqlSort }): Promise<string> => {
+export const buildSqlConditions = async (o: Object, options?: SqlConditionOptions): Promise<string> => {
     let conditions = "";
     let prefix = options?.prefix ?? "";
     if (prefix.trim() !== "") {
@@ -35,6 +45,13 @@ export const buildSqlConditions = async (o: Object, options?: { prefix?: string,
             conditions += (i + 1 <= 1) ?
                 ` WHERE ${prefix}${entries.keys[i]} = ${valueToString}` :
                 ` AND ${prefix}${entries.keys[i]} = ${valueToString}`;
+            if (options?.dateRange) {
+                const startDate = options.dateRange.startDate.toLocaleDateString("en-CA");
+                const endDate = options.dateRange.endDate.toLocaleDateString("en-CA");
+                conditions += (i + 1 <= 1) ?
+                ` WHERE ${prefix}${options.dateRange.column} BETWEEN '${startDate}' AND '${endDate}'` :
+                ` AND ${prefix}${options.dateRange.column} BETWEEN '${startDate}' AND '${endDate}'`;
+            }
         }
     }
     if (options?.sort) {
@@ -83,4 +100,4 @@ export const buildSqlUpdateQuery = async (table: string, updateData: Object, con
     const c = await buildSqlConditions(condition);
     const query = `UPDATE ${table} SET ${parameters.join(", ")}${c};`;
     return query;
-}
+};
