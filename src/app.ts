@@ -9,6 +9,7 @@ import transactionSettingsRoutes from './modules/transactions/settings/transacti
 import apiCallTestRoutes from './modules/generalTests/apiCallTest';
 import exportDataRoutes from './modules/exportData/export-data.routes';
 import generateReportRoutes from './modules/reports/generate-reports.route';
+import expensesRecordRoutes from './modules/expenses/expenses.route';
 import 'dotenv/config';
 
 const app = express();
@@ -25,6 +26,7 @@ app.use('/api/transaction-settings/', transactionSettingsRoutes);
 app.use('/api/test/', apiCallTestRoutes);
 app.use('/api/export/', exportDataRoutes);
 app.use('/api/reports/', generateReportRoutes);
+app.use('/api/expenses-record/', expensesRecordRoutes);
 
 app.get('/', (req, res) => {
     res.send('Welcome to the Stock Management API!');
