@@ -22,6 +22,7 @@ export const insertNewExpenseRecord = async (expense: Omit<ExpensesRecord, "expe
         await transaction.begin();
         const request = new sql.Request(transaction);
         const query = await gh.buildSqlInsertQuery("expenses_record", expense, transaction, request);
+        console.log(query);
         const res = await request.query(query);
         await transaction.commit();
         return res.rowsAffected[0] > 0;
@@ -44,3 +45,12 @@ export const updateExpenseRecord = async (expense_id: number, expense: Partial<E
         return error;
     }
 };
+
+export const readMonthlyExpensesTotal = async (startDate: Date, endDate: Date) => {
+    const pool = await getPool();
+    const start = startDate.toLocaleDateString("en-CA");
+    const end = endDate.toLocaleDateString("en-CA");
+    const query = `SELECT SUM(expense_amount) as expense_amount FROM expenses_record WHERE expense_date BETWEEN '${start}' AND '${end}'`;
+    const res = (await pool.query(query)).recordset[0].expense_amount;
+    return res;
+}
