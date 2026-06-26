@@ -8,8 +8,8 @@ import salesRoutes from './modules/transactions/sales/sales.routes';
 import transactionSettingsRoutes from './modules/transactions/settings/transaction-settings.routes';
 import apiCallTestRoutes from './modules/generalTests/apiCallTest';
 import exportDataRoutes from './modules/exportData/export-data.routes';
-import generateReportRoutes from './modules/reports/generate-reports.route';
-import expensesRecordRoutes from './modules/expenses/expenses.route';
+import reportRoutes from './modules/reports/reports.routes';
+import expensesRecordRoutes from './modules/expenses/expenses.routes';
 import 'dotenv/config';
 
 const app = express();
@@ -25,7 +25,7 @@ app.use('/api/sales/', salesRoutes);
 app.use('/api/transaction-settings/', transactionSettingsRoutes);
 app.use('/api/test/', apiCallTestRoutes);
 app.use('/api/export/', exportDataRoutes);
-app.use('/api/reports/', generateReportRoutes);
+app.use('/api/reports/', reportRoutes);
 app.use('/api/expenses-record/', expensesRecordRoutes);
 
 app.get('/', (req, res) => {
