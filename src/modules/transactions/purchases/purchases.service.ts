@@ -1,5 +1,5 @@
 import * as repo from './purchases.repository';
-import { SqlSort } from '../../global/globalHelpers';
+import { SqlSort } from '../../../utils/globalHelpers';
 import { generateNextTransactionID, updateLatestTransactionID } from '../settings/transaction-settings.service';
 import type { PurchasesTransactions } from './purchases.types';
 import type { TransactionDetails } from '../shared.transactions.types';

@@ -1,7 +1,7 @@
 import sql from 'mssql';
 import { getPool } from '../../../config/db';
-import * as gh from '../../global/globalHelpers';
-import type { SqlSort } from '../../global/globalHelpers';
+import * as gh from '../../../utils/globalHelpers';
+import type { SqlSort } from '../../../utils/globalHelpers';
 import type { PurchasesTransactions } from './purchases.types';
 import type { TransactionDetails } from '../shared.transactions.types';
 import type { Supplier, SupplierVehicles } from '../../clients/supplier/supplier.types';

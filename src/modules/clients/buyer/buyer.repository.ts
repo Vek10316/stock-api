@@ -1,7 +1,7 @@
 import sql from "mssql";
 import { getPool } from "../../../config/db";
 import { Buyer, BuyerVehicles } from "./buyer.types";
-import * as gh from "../../global/globalHelpers";
+import * as gh from "../../../utils/globalHelpers";
 
 export const readBuyers = async (data?: Partial<Buyer>, sort?: gh.SqlSort): Promise<Buyer[]> => {
     const pool = await getPool();

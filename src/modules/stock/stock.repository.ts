@@ -1,8 +1,8 @@
 import { getPool } from '../../config/db';
-import type { SqlSort } from '../global/globalHelpers';
+import type { SqlSort } from '../../utils/globalHelpers';
 import * as StockTypes from './stock.types';
 import sql from "mssql";
-import * as gh from '../global/globalHelpers';
+import * as gh from '../../utils/globalHelpers';
 
 export const readStock = async (data?: Partial<StockTypes.Stock>): Promise<StockTypes.Stock[]> => {
     const pool = await getPool();

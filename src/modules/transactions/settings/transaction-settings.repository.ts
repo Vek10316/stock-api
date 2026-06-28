@@ -1,7 +1,7 @@
 import type { TransactionSettings } from "./transaction-settings.types";
 import * as sql from "mssql";
 import { getPool } from "../../../config/db";
-import * as gh from "../../global/globalHelpers";
+import * as gh from "../../../utils/globalHelpers";
 
 export const readTransactionSettings = async (settings: Partial<TransactionSettings>): Promise<TransactionSettings[] | null> => {
     const pool = await getPool();

@@ -1,6 +1,6 @@
 import type { ExpensesRecord } from "./expenses.type";
 import { getPool } from "../../config/db";
-import * as gh from "../global/globalHelpers";
+import * as gh from "../../utils/globalHelpers";
 import * as sql from "mssql";
 
 export const readAllExpenses = async () => {
