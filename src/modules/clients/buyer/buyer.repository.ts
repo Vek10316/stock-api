@@ -3,11 +3,11 @@ import { getPool } from "../../../config/db";
 import { Buyer, BuyerVehicles } from "./buyer.types";
 import * as gh from "../../../utils/globalHelpers";
 
-export const readBuyers = async (data?: Partial<Buyer>, sort?: gh.SqlSort): Promise<Buyer[]> => {
+export const readBuyers = async (data?: Partial<Buyer>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<Buyer[]> => {
     const pool = await getPool();
     try {
         let query = "SELECT * FROM master_buyer";
-        query += await gh.buildSqlConditions(data ?? {}, { sort: sort ?? { column: "buyer_name" } });
+        query += await gh.buildSqlConditions(data ?? {}, sqlClauseOptions);
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
@@ -78,11 +78,20 @@ export const deleteBuyer = async (id: string): Promise<boolean> => {
     }
 };
 
-export const readBuyerVehicles = async (data: Partial<BuyerVehicles>): Promise<BuyerVehicles[]> => {
+export const readBuyerVehicles = async (data?: Partial<BuyerVehicles>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<BuyerVehicles[]> => {
+    if (search !== undefined && search?.trim() !== "") {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            search: {
+                columns: ["plate_no"],
+                searchQuery: search
+            }
+        }
+    };
     const pool = await getPool();
     try {
         let query = "SELECT * FROM buyer_vehicles";
-        query += await gh.buildSqlConditions(data);
+        query += await gh.buildSqlConditions(data ?? {}, sqlClauseOptions);
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
@@ -160,13 +169,25 @@ export const readBuyerName = async (buyer_id: string): Promise<string> => {
     return result;
 };
 
-export const readBuyersWithVehicles = async (data: Partial<Buyer>): Promise<{ buyer: Buyer, vehicles?: BuyerVehicles[] }[]> => {
+export const readBuyersWithVehicles = async (data?: Partial<Buyer>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<{ buyer: Buyer, vehicles?: BuyerVehicles[] }[]> => {
+    if (search !== undefined && search?.trim() !== "") {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            search: {
+                columns: ["M.buyer_id", "M.buyer_name", "M.buyer_phone", "V.plate_no"],
+                searchQuery: search
+            }
+        };
+    };
     const pool = await getPool();
     let query = `SELECT M.*, V.vehicle_id, V.plate_no
         FROM master_buyer AS M
         LEFT JOIN buyer_vehicles AS V
         ON M.buyer_id = V.buyer_id`;
-    query += await gh.buildSqlConditions(data, { prefix: "M" });
+    query += await gh.buildSqlConditions(data ?? {}, { 
+        ...sqlClauseOptions,
+        prefix: "M"
+     });
     const result = (await pool.query(query)).recordset;
     const grouped = new Map<string, {
         buyer: Buyer;

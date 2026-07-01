@@ -3,9 +3,19 @@ import { getPool } from "../../config/db";
 import * as gh from "../../utils/globalHelpers";
 import * as sql from "mssql";
 
-export const readAllExpenses = async () => {
+export const readAllExpenses = async (filter?: Partial<ExpensesRecord>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string) => {
     const pool = await getPool();
-    const query = "SELECT * FROM expenses_record";
+    let query = "SELECT * FROM expenses_record";
+    if (search !== undefined && search?.trim() !== "") {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            search: {
+                columns: ["expense_id", "expense_category", "expense_amount", "expense_description"],
+                searchQuery: search
+            },
+        }
+    }
+    query += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
     return (await pool.query(query)).recordset;
 };
 

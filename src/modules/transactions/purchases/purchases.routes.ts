@@ -5,7 +5,7 @@ const router = Router();
 
 router.post("/", controller.insertPurchasesTransactions);
 router.get("/details/:id", controller.readPurchasesDetails);
-router.get("/read-full-details/", controller.readFullPurchaseDetails);
+router.get("/read-full-details/:id", controller.readFullPurchaseDetails);
 router.get("/", controller.readPurchasesTransactions);
 router.patch("/:id", controller.updatePurchasesTransactions);
 router.delete("/:id", controller.deletePurchasesTransactions);

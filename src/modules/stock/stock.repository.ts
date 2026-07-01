@@ -4,10 +4,10 @@ import * as StockTypes from './stock.types';
 import sql from "mssql";
 import * as gh from '../../utils/globalHelpers';
 
-export const readStock = async (data?: Partial<StockTypes.Stock>): Promise<StockTypes.Stock[]> => {
+export const readStock = async (data?: Partial<StockTypes.Stock>, sqlClauseOptions?: gh.SqlClauseOptions): Promise<StockTypes.Stock[]> => {
     const pool = await getPool();
     let query = "SELECT * FROM master_stock";
-    query += await gh.buildSqlConditions(data ?? {});
+    query += await gh.buildSqlConditions(data ?? {}, sqlClauseOptions);
     const result = await pool.query(query);
     return result.recordset;
 };
@@ -82,7 +82,7 @@ export const deleteStockById = async (stock_id: string): Promise<boolean> => {
     }
 };
 
-export const readStockPricingHistory = async (data: Partial<StockTypes.StockPricingHistory>): Promise<StockTypes.StockPricingHistory[]> => {
+export const readStockPricingHistory = async (data?: Partial<StockTypes.StockPricingHistory>, sqlClauseOptions?: gh.SqlClauseOptions): Promise<StockTypes.StockPricingHistory[]> => {
     const pool = await getPool();
     let query = "SELECT * FROM stock_pricing_history";
     try {
@@ -298,14 +298,14 @@ const readStockQuantity = async (id: string): Promise<number> => {
     return result[0].current_quantity;
 };
 
-export const readStockWithPrice = async (data: Partial<StockTypes.Stock>): Promise<(StockTypes.Stock & { buy_price: number, sell_price: number })[]> => {
+export const readStockWithPrice = async (data?: Partial<StockTypes.Stock>, sqlClauseOptions?: gh.SqlClauseOptions): Promise<(StockTypes.Stock & { buy_price: number, sell_price: number })[]> => {
     const pool = await getPool();
     let query = `SELECT S.*, P.effective_date, P.buy_price, P.sell_price
     FROM master_stock AS S
     LEFT JOIN stock_pricing_history AS P
     ON S.stock_id = P.stock_id`;
 
-    query += await gh.buildSqlConditions(data, {
+    query += await gh.buildSqlConditions(data ?? {}, {
         prefix: "S"
     });
     const result = (await pool.query(query)).recordset;

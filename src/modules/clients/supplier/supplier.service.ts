@@ -1,8 +1,9 @@
 import * as repo from "./supplier.repository";
 import type { Supplier, SupplierVehicles } from "./supplier.types";
+import type { SqlClauseOptions } from "../../../utils/globalHelpers";
 
-export const readSuppliers = async (data: Partial<Supplier>): Promise<Supplier[]> => {
-    let supplier = await repo.readSuppliers(data);
+export const readSuppliers = async (data?: Partial<Supplier>, sqlClauseOptions?: SqlClauseOptions, search?: string): Promise<Supplier[]> => {
+    let supplier = await repo.readSuppliers(data, sqlClauseOptions, search);
     if (!data || data === undefined) {
         supplier = supplier.slice(0, 50);
     }
@@ -47,8 +48,8 @@ export const deleteSupplier = (supplier_id: string) => {
     return repo.deleteSupplier(supplier_id);
 };
 
-export const readSupplierVehicles = (data: Partial<SupplierVehicles>) => {
-    return repo.readSupplierVehicles(data);
+export const readSupplierVehicles = (filter?: Partial<SupplierVehicles>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
+    return repo.readSupplierVehicles(filter, sqlClauseOptions, search);
 };
 
 export const insertSupplierVehicle = (data: SupplierVehicles) => {
@@ -67,6 +68,6 @@ export const readSupplierName = (supplier_id: string): Promise<string> => {
     return repo.readSupplierName(supplier_id);
 };
 
-export const readSupplierWithVehicles = async (data: Partial<Supplier>) => {
-    return await repo.readSuppliersWithVehicles(data);
+export const readSupplierWithVehicles = async (data?: Partial<Supplier>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
+    return await repo.readSuppliersWithVehicles(data, sqlClauseOptions, search);
 };

@@ -1,8 +1,9 @@
 import * as repo from "./buyer.repository";
 import type { Buyer, BuyerVehicles } from "./buyer.types";
+import type { SqlClauseOptions } from "../../../utils/globalHelpers";
 
-export const readBuyers = async (data: Partial<Buyer>): Promise<Buyer[]> => {
-    let buyer = await repo.readBuyers(data);
+export const readBuyers = async (data?: Partial<Buyer>, sqlClauseOptions?: SqlClauseOptions, search?: string): Promise<Buyer[]> => {
+    let buyer = await repo.readBuyers(data, sqlClauseOptions, search);
     if (!data || data === undefined) {
         buyer = buyer.slice(0, 50);
     }
@@ -47,8 +48,8 @@ export const deleteBuyer = (buyer_id: string) => {
     return repo.deleteBuyer(buyer_id);
 };
 
-export const readBuyerVehicles = (data: Partial<BuyerVehicles>) => {
-    return repo.readBuyerVehicles(data);
+export const readBuyerVehicles = (filter?: Partial<BuyerVehicles>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
+    return repo.readBuyerVehicles(filter, sqlClauseOptions, search);
 };
 
 export const insertBuyerVehicle = (data: BuyerVehicles) => {
@@ -67,6 +68,6 @@ export const readBuyerName = (buyer_id: string): Promise<string> => {
     return repo.readBuyerName(buyer_id);
 };
 
-export const readBuyerWithVehicles = async (data: Partial<Buyer>) => {
-    return await repo.readBuyersWithVehicles(data);
+export const readBuyerWithVehicles = async (data?: Partial<Buyer>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
+    return await repo.readBuyersWithVehicles(data, sqlClauseOptions, search);
 };

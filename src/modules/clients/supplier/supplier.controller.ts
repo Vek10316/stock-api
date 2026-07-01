@@ -3,7 +3,20 @@ import * as service from './supplier.service';
 
 export const getSuppliers = async (req: Request, res: Response) => {
     try {
-        const result = await service.readSuppliers(req.body);
+        const query = req.query;
+        const pageNo = Number.parseInt(query.pageNo as string);
+        const pageSize = Number.parseInt(query.pageSize as string);
+        const search = query.search as string;
+        const result = await service.readSuppliers({}, {
+            pagination: {
+                pageSize,
+                pageNumber: pageNo,
+            },
+            sort: {
+                column: "supplier_id",
+                direction: "DESC",
+            },
+        }, search);
         res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
@@ -63,7 +76,16 @@ export const deleteSupplier = async (req: Request, res: Response) => {
 
 export const getSupplierVehicles = async (req: Request, res: Response) => {
     try {
-        const result = await service.readSupplierVehicles(req.body);
+        const query = req.query;
+        const pageNo = Number.parseInt(query.pageNo as string);
+        const pageSize = Number.parseInt(query.pageSize as string);
+        const search = query.search as string;
+        const result = await service.readSupplierVehicles(undefined, {
+            pagination: {
+                pageSize,
+                pageNumber: pageNo,
+            }
+        }, search);
         res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
@@ -116,7 +138,16 @@ export const deleteSupplierVehicle = async (req: Request, res: Response) => {
 
 export const readSupplierWithVehicles = async (req: Request, res: Response) => {
     try {
-        const result = await service.readSupplierWithVehicles(req.body);
+        const query = req.query;
+        const pageNo = Number.parseInt(query.pageNo as string);
+        const pageSize = Number.parseInt(query.pageSize as string);
+        const search = query.search as string;
+        const result = await service.readSupplierWithVehicles(undefined, {
+            pagination: {
+                pageSize,
+                pageNumber: pageNo,
+            }
+        }, search);
         res.status(200).json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });

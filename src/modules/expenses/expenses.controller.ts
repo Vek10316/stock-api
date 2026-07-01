@@ -3,7 +3,16 @@ import { Request, Response } from "express";
 
 export const readAllExpenses = async (req: Request, res: Response) => {
     try {
-        const expenses = await service.readAllExpenses();
+        const query = req.query;
+        const pageNo = Number.parseInt(query.pageNo as string);
+        const pageSize = Number.parseInt(query.pageSize as string);
+        const search = query.search as string;
+        const expenses = await service.readAllExpenses({}, {
+            pagination: {
+                pageSize,
+                pageNumber: pageNo,
+            }
+        }, search);
         res.json(expenses);
     } catch (err: any) {
         console.error(err);

@@ -1,5 +1,5 @@
 import * as repo from './purchases.repository';
-import { SqlSort } from '../../../utils/globalHelpers';
+import * as gh from '../../../utils/globalHelpers';
 import { generateNextTransactionID, updateLatestTransactionID } from '../settings/transaction-settings.service';
 import type { PurchasesTransactions } from './purchases.types';
 import type { TransactionDetails } from '../shared.transactions.types';
@@ -9,8 +9,8 @@ import { deleteStockMovementByTransactionID as deleteStockMovementByTransactID }
 import { readSupplierName } from '../../clients/supplier/supplier.service';
 import { Supplier, SupplierVehicles } from '../../clients/supplier/supplier.types';
 
-export const readPurchasesTransactions = async (filter: Partial<PurchasesTransactions>, sort?: SqlSort) => {
-    const purchases = await repo.readPurchasesTransactions(filter, sort);
+export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string | undefined) => {
+    const purchases = await repo.readPurchasesTransactions(filter, sqlClauseOptions, search);
     let response = new Map<string, (PurchasesTransactions & { supplier_name: string, total_quantity: number })>();
     for (const row of purchases) {
         const supplierName = await readSupplierName(row.supplier_id);
@@ -23,6 +23,10 @@ export const readPurchasesTransactions = async (filter: Partial<PurchasesTransac
     }
 
     return Array.from(response.values());
+};
+
+export const listPurchasesTransactions = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string | undefined) => {
+    return await repo.listPurchaseTransactions(filter, sqlClauseOptions, search);
 };
 
 export const insertPurchasesTranscation = async (header: Omit<PurchasesTransactions, "transact_id">, details: Omit<TransactionDetails, "transact_id" | "detail_id">[]): Promise<{ header: PurchasesTransactions & { supplier_name: string }, details: TransactionDetails[] }> => {
@@ -113,13 +117,13 @@ export const generateNewTransactionHeaders = async (): Promise<{ transact_id: st
     return header;
 };
 
-export const readFullPurchaseDetails = async (filter?: Partial<PurchasesTransactions>): Promise<{
+export const readFullPurchaseDetails = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<{
     header: PurchasesTransactions,
     details: TransactionDetails[],
     supplier: Supplier,
     vehicles: SupplierVehicles[]
 }[]> => {
-    const result = await repo.readFullPurchaseDetails(filter);
+    const result = await repo.readFullPurchaseDetails(filter, sqlClauseOptions, search);
     return result;
 }
 

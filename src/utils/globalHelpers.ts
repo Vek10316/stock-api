@@ -11,7 +11,7 @@ export type SqlSort = {
     direction?: "ASC" | "DESC";
 };
 
-export type SqlConditionOptions = {
+export type SqlClauseOptions = {
     prefix?: string | undefined;
     dateRange?: {
         column: string,
@@ -19,9 +19,23 @@ export type SqlConditionOptions = {
         endDate: Date
     };
     sort?: SqlSort | undefined;
-}
+    pagination?: {
+        pageSize: number,
+        pageNumber: number,
+    };
+    search?: {
+        columns: string[],
+        searchQuery: string,
+    }
+};
+
+export type SearchQuery = {
+    columns: string[],
+    searchQuery: string,
+};
 
 export const splitObjectEntries = async (o: Object): Promise<ObjectEntries> => {
+    if (o === undefined) return {keys: [], values: [], types: []};
     const keys = Object.keys(o);
     const values = Object.values(o);
     let types: string[] = [];
@@ -29,33 +43,50 @@ export const splitObjectEntries = async (o: Object): Promise<ObjectEntries> => {
     return { keys, values, types };
 };
 
-export const buildSqlConditions = async (o: Object, options?: SqlConditionOptions): Promise<string> => {
+export const buildSqlConditions = async (o: Object, options?: SqlClauseOptions): Promise<string> => {
     let conditions = "";
     let prefix = options?.prefix ?? "";
     if (prefix.trim() !== "") {
         prefix = prefix.trim();
         if (!prefix.endsWith(".")) prefix += "."
     }
-    if (o != undefined) {
-        const entries = await splitObjectEntries(o);
+    const entries = await splitObjectEntries(o);
+    if (options?.search !== undefined && options?.search.searchQuery.trim() !== "") {
+        options?.search.columns.forEach(col => {
+            conditions += !conditions.includes("WHERE") ?
+                ` WHERE (${col} LIKE '%${options.search?.searchQuery}%')` : 
+                conditions.includes("WHERE (") ?
+                ` OR (${col} LIKE '%${options.search?.searchQuery}%')` :
+                ` AND (${col} LIKE '%${options.search?.searchQuery}%')`
+
+        });
+    }
+    if (o !== undefined) {
         for (var i = 0; i < entries.keys.length; i++) {
             const valueToString = typeof entries.values[i] === 'number' ?
                 `${entries.values[i]}` :
                 `'${entries.values[i]}'`
-            conditions += (i + 1 <= 1) ?
+            conditions += !conditions.includes("WHERE") ?
                 ` WHERE ${prefix}${entries.keys[i]} = ${valueToString}` :
                 ` AND ${prefix}${entries.keys[i]} = ${valueToString}`;
-            if (options?.dateRange) {
-                const startDate = options.dateRange.startDate.toLocaleDateString("en-CA");
-                const endDate = options.dateRange.endDate.toLocaleDateString("en-CA");
-                conditions += (i + 1 <= 1) ?
-                ` WHERE ${prefix}${options.dateRange.column} BETWEEN '${startDate}' AND '${endDate}'` :
-                ` AND ${prefix}${options.dateRange.column} BETWEEN '${startDate}' AND '${endDate}'`;
-            }
         }
     }
-    if (options?.sort) {
-        conditions += ` ORDER BY ${options.sort.column} ${options.sort.direction ?? "ASC"}`;
+    if (options?.dateRange) {
+        const startDate = options.dateRange.startDate.toLocaleDateString("en-CA");
+        const endDate = options.dateRange.endDate.toLocaleDateString("en-CA");
+        conditions += !conditions.includes("WHERE") ?
+            ` WHERE ${prefix}${options.dateRange.column} BETWEEN '${startDate}' AND '${endDate}'` :
+            ` AND ${prefix}${options.dateRange.column} BETWEEN '${startDate}' AND '${endDate}'`;
+    }
+    if (options?.sort !== undefined) {
+        conditions += ` ORDER BY ${prefix}${options.sort.column} ${options.sort.direction ?? "ASC"}`;
+    }
+    if (options?.pagination !== undefined && !isNaN(options?.pagination?.pageNumber) && !isNaN(options?.pagination?.pageSize)) {
+        if (options?.sort === undefined) {
+            " ORDER BY (SELECT NULL)"
+        }
+        conditions += ` OFFSET ${((options.pagination.pageNumber - 1) * options.pagination.pageSize)} ROWS` +
+            ` FETCH NEXT ${options.pagination.pageSize} ROWS ONLY`;
     }
     return conditions;
 };

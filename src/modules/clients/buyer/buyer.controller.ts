@@ -3,7 +3,20 @@ import * as service from './buyer.service';
 
 export const getBuyers = async (req: Request, res: Response) => {
     try {
-        const result = await service.readBuyers(req.body);
+        const query = req.query;
+        const pageNo = Number.parseInt(query.pageNo as string);
+        const pageSize = Number.parseInt(query.pageSize as string);
+        const search = query.search as string;
+        const result = await service.readBuyers({}, {
+            pagination: {
+                pageSize,
+                pageNumber: pageNo,
+            },
+            sort: {
+                column: "buyer_id",
+                direction: "DESC",
+            },
+        }, search);
         res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
@@ -63,7 +76,16 @@ export const deleteBuyer = async (req: Request, res: Response) => {
 
 export const getBuyerVehicles = async (req: Request, res: Response) => {
     try {
-        const result = await service.readBuyerVehicles(req.body);
+        const query = req.query;
+        const pageNo = Number.parseInt(query.pageNo as string);
+        const pageSize = Number.parseInt(query.pageSize as string);
+        const search = query.search as string;
+        const result = await service.readBuyerVehicles(undefined, {
+            pagination: {
+                pageSize,
+                pageNumber: pageNo,
+            }
+        }, search);
         res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
@@ -116,7 +138,16 @@ export const deleteBuyerVehicle = async (req: Request, res: Response) => {
 
 export const readBuyerWithVehicles = async (req: Request, res: Response) => {
     try {
-        const result = await service.readBuyerWithVehicles(req.body);
+        const query = req.query;
+        const pageNo = Number.parseInt(query.pageNo as string);
+        const pageSize = Number.parseInt(query.pageSize as string);
+        const search = query.search as string;
+        const result = await service.readBuyerWithVehicles(undefined, {
+            pagination: {
+                pageSize,
+                pageNumber: pageNo,
+            }
+        }, search);
         res.status(200).json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });

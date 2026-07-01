@@ -1,8 +1,9 @@
 import * as repo from "./expenses.respository";
 import type { ExpensesRecord } from "./expenses.type";
+import type { SqlClauseOptions } from "../../utils/globalHelpers";
 
-export const readAllExpenses = async () => {
-    return await repo.readAllExpenses();
+export const readAllExpenses = async (filter?: Partial<ExpensesRecord>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
+    return await repo.readAllExpenses(filter, sqlClauseOptions, search);
 };
 
 export const readExpenseRecordByID = async (id: string) => {

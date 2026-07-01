@@ -1,8 +1,18 @@
 import * as repo from './stock.repository';
 import * as StockTypes from './stock.types';
+import type { SqlClauseOptions } from '../../utils/globalHelpers';
 
-export const readStock = (data: StockTypes.Stock) => {
-    return repo.readStock(data as Partial<StockTypes.Stock>);
+export const readStock = async (filter?: Partial<StockTypes.Stock>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
+    if (search !== undefined && search.trim() !== "") {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            search: {
+                columns: ["stock_id", "stock_description"],
+                searchQuery: search
+            },
+        };
+    }
+    return await repo.readStock(filter, sqlClauseOptions);
 }
 
 export const readStockCategories = () => {
