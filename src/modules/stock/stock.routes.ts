@@ -5,6 +5,7 @@ const router = Router();
 
 router.post('/inventory/', controller.createStock);
 router.get('/inventory/categories/', controller.readStockCategories)
+router.get('/inventory/list', controller.listStock);
 router.get('/inventory/', controller.readStock);
 router.get('/inventory/:id', controller.readStockDetails)
 router.patch('/inventory/:id', controller.updateStock);

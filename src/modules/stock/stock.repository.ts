@@ -3,6 +3,7 @@ import type { SqlSort } from '../../utils/globalHelpers';
 import * as StockTypes from './stock.types';
 import sql from "mssql";
 import * as gh from '../../utils/globalHelpers';
+import { ApiPaginatedResponse } from '../../types/api-response.type';
 
 export const readStock = async (data?: Partial<StockTypes.Stock>, sqlClauseOptions?: gh.SqlClauseOptions): Promise<StockTypes.Stock[]> => {
     const pool = await getPool();
@@ -12,11 +13,11 @@ export const readStock = async (data?: Partial<StockTypes.Stock>, sqlClauseOptio
     return result.recordset;
 };
 
-export const readStockCategories = async (): Promise<string[]> => {
+export const readStockCategories = async () => {
     const pool = await getPool();
     let query = "SELECT DISTINCT(stock_category) FROM master_stock";
-    const result = await pool.query(query);
-    return result.recordset;
+    const result = (await pool.query(query)).recordset.map(row => row.stock_category);
+    return result;
 }
 
 export const createNewStock = async (data: StockTypes.Stock): Promise<StockTypes.Stock> => {
@@ -88,7 +89,7 @@ export const readStockPricingHistory = async (data?: Partial<StockTypes.StockPri
     try {
         const sort: SqlSort = {
             column: "effective_date",
-            direction: "DESC"
+            order: "DESC"
         };
         if (data) {
             query += await gh.buildSqlConditions(data, { sort: sort });
@@ -298,36 +299,59 @@ const readStockQuantity = async (id: string): Promise<number> => {
     return result[0].current_quantity;
 };
 
-export const readStockWithPrice = async (data?: Partial<StockTypes.Stock>, sqlClauseOptions?: gh.SqlClauseOptions): Promise<(StockTypes.Stock & { buy_price: number, sell_price: number })[]> => {
-    const pool = await getPool();
-    let query = `SELECT S.*, P.effective_date, P.buy_price, P.sell_price
-    FROM master_stock AS S
-    LEFT JOIN stock_pricing_history AS P
-    ON S.stock_id = P.stock_id`;
+export type StockListResponse = StockTypes.Stock & { buy_price: number, sell_price: number };
 
-    query += await gh.buildSqlConditions(data ?? {}, {
-        prefix: "S"
-    });
-    const result = (await pool.query(query)).recordset;
-
-    let grouped = new Map<string, StockTypes.Stock & { buy_price: number, sell_price: number }>();
-
-    for (const row of result) {
-        if (!grouped.has(row.stock_id)) {
-            grouped.set(row.stock_id,
-                {
-                    stock_id: row.stock_id,
-                    stock_description: row.stock_description,
-                    stock_uom: row.stock_uom,
-                    stock_category: row.stock_category,
-                    current_quantity: row.current_quantity,
-                    buy_price: row.buy_price,
-                    sell_price: row.sell_price,
-                },
-            );
+export const listStock = async (filter?: Partial<StockTypes.Stock>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<ApiPaginatedResponse<StockListResponse[]>> => {
+    if (search !== undefined && search.trim() !== "") {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            search: {
+                columns: ["S.stock_id", "S.stock_description"],
+                searchQuery: search
+            },
         }
     }
+    const pool = await getPool();
+    let baseQuery = `SELECT S.*, P.buy_price, P.sell_price` +
+    ` FROM master_stock AS S` +
+    ` LEFT JOIN stock_pricing_history AS P` +
+    ` ON S.stock_id = P.stock_id`;
 
-    const response = Array.from(grouped.values());
+    baseQuery += await gh.buildSqlConditions(filter ?? {}, {
+        ...sqlClauseOptions,
+        alias: "S",
+        sort: {
+            column: "effective_date",
+            alias: "P",
+            order: "DESC"
+        }
+    });
+
+    const result = (await pool.query(baseQuery)).recordset as StockListResponse[];
+    let resultMap = new Map<string, StockListResponse>();
+    result.forEach(row => {
+        if (!resultMap.has(row.stock_id)) resultMap.set(row.stock_id, row)
+    })
+
+    let totalCountQuery = "SELECT COUNT(DISTINCT(S.stock_id)) as total_count FROM master_stock AS S";
+    totalCountQuery += await gh.buildSqlConditions(filter ?? {}, {
+        ...sqlClauseOptions,
+        sort: undefined,
+        pagination: undefined,
+    });
+    const totalCount = (await pool.query(totalCountQuery)).recordset[0].total_count as number;
+
+    let metadata = {
+        pageNo: sqlClauseOptions?.pagination?.pageNumber!,
+        pageSize: sqlClauseOptions?.pagination?.pageSize!,
+        totalPages: Math.ceil(totalCount / sqlClauseOptions?.pagination?.pageSize!),
+        totalCount
+    };
+
+    const response = {
+        data: Array.from(resultMap.values()),
+        metadata
+    }
+
     return response;
 };

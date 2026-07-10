@@ -2,6 +2,7 @@ import sql from "mssql";
 import { getPool } from "../../../config/db";
 import { Supplier, SupplierVehicles } from "./supplier.types";
 import * as gh from "../../../utils/globalHelpers";
+import type { ApiPaginatedResponse } from "../../../types/api-response.type";
 
 export const readSuppliers = async (data?: Partial<Supplier>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<Supplier[]> => {
     const pool = await getPool();
@@ -169,7 +170,12 @@ export const readSupplierName = async (supplier_id: string): Promise<string> => 
     return result;
 };
 
-export const readSuppliersWithVehicles = async (data?: Partial<Supplier>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<{ supplier: Supplier, vehicles?: SupplierVehicles[] }[]> => {
+export type ListSupplierResult = Supplier & {
+    plate_no: string;
+};
+
+export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string):
+    Promise<ApiPaginatedResponse<ListSupplierResult[]>> => {
     if (search !== undefined && search?.trim() !== "") {
         sqlClauseOptions = {
             ...sqlClauseOptions,
@@ -179,47 +185,39 @@ export const readSuppliersWithVehicles = async (data?: Partial<Supplier>, sqlCla
             }
         };
     };
-    const pool = await getPool();
-    let query = `SELECT M.*, V.vehicle_id, V.plate_no
-        FROM master_supplier AS M
-        LEFT JOIN supplier_vehicles AS V
-        ON M.supplier_id = V.supplier_id`;
-    query += await gh.buildSqlConditions(data ?? {}, { 
+    sqlClauseOptions = {
         ...sqlClauseOptions,
-        prefix: "M"
-     });
-    const result = (await pool.query(query)).recordset;
-    const grouped = new Map<string, {
-        supplier: Supplier;
-        vehicles: SupplierVehicles[];
-    }>();
+        alias: "M"
+    };
+    const pool = await getPool();
+    let baseQuery = `SELECT M.*, V.plate_no` +
+        ` FROM master_supplier AS M` +
+        ` LEFT JOIN (` +
+        ` SELECT supplier_id, STRING_AGG(plate_no, ', ') AS plate_no` +
+        ` FROM supplier_vehicles GROUP BY supplier_id)` +
+        ` AS V ON M.supplier_id = V.supplier_id`;
+    baseQuery += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
+    const data = (await pool.query(baseQuery)).recordset.map(d => ({
+        ...d,
+        plate_no: d.plate_no !== null ? d.plate_no.split(", ") : []
+    }));
 
-    for (const row of result) {
-        if (!grouped.has(row.supplier_id)) {
-            grouped.set(row.supplier_id, {
-                supplier: {
-                    supplier_id: row.supplier_id,
-                    supplier_id_type: row.supplier_id_type,
-                    supplier_name: row.supplier_name,
-                    supplier_address: row.supplier_address,
-                    supplier_phone: row.supplier_phone,
-                    supplier_email: row.supplier_email,
-                    supplier_tin: row.supplier_tin,
-                },
-                vehicles: [],
-            });
-        }
-
-        if (row.vehicle_id) {
-            grouped.get(row.supplier_id)!.vehicles.push({
-                vehicle_id: row.vehicle_id,
-                supplier_id: row.supplier_id,
-                plate_no: row.plate_no,
-            });
+    let totalCountQuery = "SELECT COUNT(DISTINCT(M.supplier_id)) AS total_count FROM master_supplier AS M" +
+        " LEFT JOIN supplier_vehicles AS V ON M.supplier_id = V.supplier_id";
+    totalCountQuery += await gh.buildSqlConditions(filter ?? {}, {
+        ...sqlClauseOptions,
+        sort: undefined,
+        pagination: undefined,
+    })
+    const totalCount = (await pool.query(totalCountQuery)).recordset[0].total_count;
+    const response = {
+        data,
+        metadata: {
+            pageNo: sqlClauseOptions?.pagination?.pageNumber ?? 1,
+            pageSize: sqlClauseOptions?.pagination?.pageSize ?? 100,
+            totalCount,
+            totalPages: Math.ceil(totalCount / (sqlClauseOptions?.pagination?.pageSize ?? 100))
         }
     }
-
-    const response = Array.from(grouped.values());
-
     return response;
 };

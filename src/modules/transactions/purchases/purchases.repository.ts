@@ -4,6 +4,7 @@ import * as gh from '../../../utils/globalHelpers';
 import type { PurchasesTransactions } from './purchases.types';
 import type { TransactionDetails } from '../shared.transactions.types';
 import type { Supplier, SupplierVehicles } from '../../clients/supplier/supplier.types';
+import type { ApiPaginatedResponse } from '../../../types/api-response.type';
 
 export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<PurchasesTransactions[]> => {
     if (search !== undefined && search?.trim() !== "") {
@@ -27,29 +28,63 @@ export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransa
     }
 };
 
-export const listPurchaseTransactions = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<PurchasesTransactions[]> => {
+export type PurchasesTransactionListResult = PurchasesTransactions & { supplier_name: string, total_quantity: number, plate_no: string[] };
+
+export const listPurchaseTransactions = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string):
+    Promise<ApiPaginatedResponse<PurchasesTransactionListResult[]>> => {
+
+    if (search !== undefined && search.trim() !== "") {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            search: {
+                columns: ["P.supplier_id", "P.transact_id", "S.supplier_name", "V.plate_no"],
+                searchQuery: search
+            },
+        };
+    };
+
     const pool = await getPool();
     try {
-        let query = "SELECT P.*, S.supplier_name, D.total_quantity, V.plate_no FROM purchases_transactions AS P " +
+        let baseQuery = "SELECT P.*, S.supplier_name, D.total_quantity, V.plate_no FROM purchases_transactions AS P" +
             " LEFT JOIN (" +
             " SELECT transact_id, SUM(item_quantity) AS total_quantity FROM purchases_transactions_details GROUP BY transact_id" +
             " ) AS D ON P.transact_id = D.transact_id" +
             " LEFT JOIN master_supplier AS S ON P.supplier_id = S.supplier_id" +
+            " LEFT JOIN (" +
+            " SELECT supplier_id, STRING_AGG(plate_no, ', ') AS plate_no FROM supplier_vehicles GROUP BY supplier_id" +
+            " ) AS V ON P.supplier_id = V.supplier_id";
+
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            alias: "P"
+        };
+        baseQuery += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
+
+        const data = (await pool.query(baseQuery)).recordset as PurchasesTransactionListResult[];
+
+        let totalCountQuery = "SELECT COUNT(DISTINCT(P.transact_id)) AS total_count FROM purchases_transactions AS P" +
+            " LEFT JOIN master_supplier AS S ON P.supplier_id = S.supplier_id" +
             " LEFT JOIN supplier_vehicles AS V ON P.supplier_id = V.supplier_id";
-        if (search !== undefined && search?.trim() !== "") {
-            sqlClauseOptions = {
-                ...sqlClauseOptions,
-                search: {
-                    columns: ["P.supplier_id", "P.transact_id", "S.supplier_name", "V.plate_no"],
-                    searchQuery: search
-                },
-                prefix: "P"
-            };
+        totalCountQuery += await gh.buildSqlConditions({}, {
+            ...sqlClauseOptions,
+            sort: undefined,
+            pagination: undefined,
+        });
+
+        const totalCount = (await pool.query(totalCountQuery)).recordset[0].total_count;
+        const metadata = {
+            pageNo: sqlClauseOptions?.pagination?.pageNumber ?? 1,
+            pageSize: sqlClauseOptions?.pagination?.pageSize ?? 100,
+            totalCount,
+            totalPages: Math.ceil(totalCount / (sqlClauseOptions?.pagination?.pageSize ?? 100))
         }
-        query += await gh.buildSqlConditions(filter ?? {}, { ...sqlClauseOptions, prefix: "P" });
-        console.log(query);
-        const result = await pool.query(query);
-        return result.recordset;
+
+        const response = {
+            data,
+            metadata
+        };
+
+        return response;
     } catch (err) {
         console.error(`Unhandled exception: `, err);
         throw err;
@@ -206,7 +241,7 @@ export const readFullPurchaseDetails = async (filter?: Partial<PurchasesTransact
             ...sqlClauseOptions,
             sort: {
                 column: "D.detail_id",
-                direction: "DESC",
+                order: "DESC",
             },
             search: {
                 columns: ["P.supplier_id", "P.transact_id", "S.supplier_name", "V.plate_no"],
@@ -216,7 +251,7 @@ export const readFullPurchaseDetails = async (filter?: Partial<PurchasesTransact
     }
     query += await gh.buildSqlConditions(filter ?? {}, {
         ...sqlClauseOptions,
-        prefix: "P",
+        alias: "P",
     });
     const result = (await pool.query(query)).recordset;
     let response = new Map<string, {

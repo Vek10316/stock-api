@@ -1,6 +1,7 @@
 import * as repo from "./buyer.repository";
 import type { Buyer, BuyerVehicles } from "./buyer.types";
 import type { SqlClauseOptions } from "../../../utils/globalHelpers";
+import { ApiPaginatedResponse } from "../../../types/api-response.type";
 
 export const readBuyers = async (data?: Partial<Buyer>, sqlClauseOptions?: SqlClauseOptions, search?: string): Promise<Buyer[]> => {
     let buyer = await repo.readBuyers(data, sqlClauseOptions, search);
@@ -16,7 +17,7 @@ export const createBuyer = async (buyer: Buyer, vehicles: Omit<BuyerVehicles, "v
         vehicles.forEach((v) => {
             repo.insertBuyerVehicle(v);
         })
-        let result = await repo.readBuyersWithVehicles({buyer_id: buyer.buyer_id});
+        let result = await repo.listBuyers({buyer_id: buyer.buyer_id});
         return result;
     } catch (err: any) {
         console.error("Failed to insert buyer: ", err);
@@ -68,6 +69,8 @@ export const readBuyerName = (buyer_id: string): Promise<string> => {
     return repo.readBuyerName(buyer_id);
 };
 
-export const readBuyerWithVehicles = async (data?: Partial<Buyer>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
-    return await repo.readBuyersWithVehicles(data, sqlClauseOptions, search);
+export const listBuyers = async (filter?: Partial<Buyer>, sqlClauseOptions?: SqlClauseOptions, search?: string)
+:Promise<ApiPaginatedResponse<(Buyer & {plate_no: string})[]>> => {
+    const result = await repo.listBuyers(filter, sqlClauseOptions, search);
+    return result;
 };

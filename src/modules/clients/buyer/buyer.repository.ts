@@ -2,6 +2,7 @@ import sql from "mssql";
 import { getPool } from "../../../config/db";
 import { Buyer, BuyerVehicles } from "./buyer.types";
 import * as gh from "../../../utils/globalHelpers";
+import type { ApiPaginatedResponse } from "../../../types/api-response.type";
 
 export const readBuyers = async (data?: Partial<Buyer>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<Buyer[]> => {
     const pool = await getPool();
@@ -169,7 +170,12 @@ export const readBuyerName = async (buyer_id: string): Promise<string> => {
     return result;
 };
 
-export const readBuyersWithVehicles = async (data?: Partial<Buyer>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<{ buyer: Buyer, vehicles?: BuyerVehicles[] }[]> => {
+export type ListBuyerResult = Buyer & {
+    plate_no: string;
+};
+
+export const listBuyers = async (filter?: Partial<Buyer>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string):
+    Promise<ApiPaginatedResponse<ListBuyerResult[]>> => {
     if (search !== undefined && search?.trim() !== "") {
         sqlClauseOptions = {
             ...sqlClauseOptions,
@@ -179,47 +185,39 @@ export const readBuyersWithVehicles = async (data?: Partial<Buyer>, sqlClauseOpt
             }
         };
     };
-    const pool = await getPool();
-    let query = `SELECT M.*, V.vehicle_id, V.plate_no
-        FROM master_buyer AS M
-        LEFT JOIN buyer_vehicles AS V
-        ON M.buyer_id = V.buyer_id`;
-    query += await gh.buildSqlConditions(data ?? {}, { 
+    sqlClauseOptions = {
         ...sqlClauseOptions,
-        prefix: "M"
-     });
-    const result = (await pool.query(query)).recordset;
-    const grouped = new Map<string, {
-        buyer: Buyer;
-        vehicles: BuyerVehicles[];
-    }>();
+        alias: "M"
+    };
+    const pool = await getPool();
+    let baseQuery = `SELECT M.*, V.plate_no` +
+        ` FROM master_buyer AS M` +
+        ` LEFT JOIN (` +
+        ` SELECT buyer_id, STRING_AGG(plate_no, ', ') AS plate_no` +
+        ` FROM buyer_vehicles GROUP BY buyer_id)` +
+        ` AS V ON M.buyer_id = V.buyer_id`;
+    baseQuery += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
+    const data = (await pool.query(baseQuery)).recordset.map(d => ({
+        ...d,
+        plate_no: d.plate_no !== null ? d.plate_no.split(", ") : []
+    }));
 
-    for (const row of result) {
-        if (!grouped.has(row.buyer_id)) {
-            grouped.set(row.buyer_id, {
-                buyer: {
-                    buyer_id: row.buyer_id,
-                    buyer_id_type: row.buyer_id_type,
-                    buyer_name: row.buyer_name,
-                    buyer_address: row.buyer_address,
-                    buyer_phone: row.buyer_phone,
-                    buyer_email: row.buyer_email,
-                    buyer_tin: row.buyer_tin,
-                },
-                vehicles: [],
-            });
-        }
-
-        if (row.vehicle_id) {
-            grouped.get(row.buyer_id)!.vehicles.push({
-                vehicle_id: row.vehicle_id,
-                buyer_id: row.buyer_id,
-                plate_no: row.plate_no,
-            });
+    let totalCountQuery = "SELECT COUNT(DISTINCT(M.buyer_id)) AS total_count FROM master_buyer AS M" +
+        " LEFT JOIN buyer_vehicles AS V ON M.buyer_id = V.buyer_id";
+    totalCountQuery += await gh.buildSqlConditions(filter ?? {}, {
+        ...sqlClauseOptions,
+        sort: undefined,
+        pagination: undefined,
+    })
+    const totalCount = (await pool.query(totalCountQuery)).recordset[0].total_count;
+    const response = {
+        data,
+        metadata: {
+            pageNo: sqlClauseOptions?.pagination?.pageNumber ?? 1,
+            pageSize: sqlClauseOptions?.pagination?.pageSize ?? 100,
+            totalCount,
+            totalPages: Math.ceil(totalCount / (sqlClauseOptions?.pagination?.pageSize ?? 100))
         }
     }
-
-    const response = Array.from(grouped.values());
-
     return response;
 };

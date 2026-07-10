@@ -6,13 +6,35 @@ import { TransactionDetails } from '../shared.transactions.types';
 export const readPurchasesTransactions = async (req: Request, res: Response) => {
     try {
         const query = req.query;
-        const pageSize = Number.parseFloat(query.pageSize as string);
-        const pageNo = Number.parseFloat(query.pageNo as string);
+        const pageSize = query.pageSize !== undefined ? Number.parseFloat(query.pageSize as string) : 100;
+        const pageNo = query.pageNo !== undefined ? Number.parseFloat(query.pageNo as string) : 1;
+        const search = query.search as string;
+        const result = await service.readPurchasesTransactions({}, {
+            sort: {
+                column: "transact_id",
+                order: "DESC",
+            },
+            pagination: {
+                pageSize,
+                pageNumber: pageNo,
+            },
+        }, search);
+        res.json(result);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const listPurchasesTransactions = async (req: Request, res: Response) => {
+    try {
+        const query = req.query;
+        const pageSize = query.pageSize !== undefined ? Number.parseFloat(query.pageSize as string) : 100;
+        const pageNo = query.pageNo !== undefined ? Number.parseFloat(query.pageNo as string) : 1;
         const search = query.search as string;
         const result = await service.listPurchasesTransactions({}, {
             sort: {
                 column: "transact_id",
-                direction: "DESC",
+                order: "DESC",
             },
             pagination: {
                 pageSize,
@@ -81,4 +103,4 @@ export const readPurchasesDetails = async (req: Request, res: Response) => {
     } catch (err: any) {
         res.status(500).json({ error: err.message });
     }
-}
+};

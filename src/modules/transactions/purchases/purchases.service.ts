@@ -8,6 +8,7 @@ import type * as StockTypes from '../../stock/stock.types';
 import { deleteStockMovementByTransactionID as deleteStockMovementByTransactID } from '../../stock/stock.repository';
 import { readSupplierName } from '../../clients/supplier/supplier.service';
 import { Supplier, SupplierVehicles } from '../../clients/supplier/supplier.types';
+import type { ApiPaginatedResponse } from '../../../types/api-response.type';
 
 export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string | undefined) => {
     const purchases = await repo.readPurchasesTransactions(filter, sqlClauseOptions, search);
@@ -25,8 +26,10 @@ export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransa
     return Array.from(response.values());
 };
 
-export const listPurchasesTransactions = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string | undefined) => {
-    return await repo.listPurchaseTransactions(filter, sqlClauseOptions, search);
+export const listPurchasesTransactions = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string | undefined):
+Promise<ApiPaginatedResponse<PurchasesTransactions[]>> => {
+    const result = await repo.listPurchaseTransactions(filter, sqlClauseOptions, search);
+    return result;
 };
 
 export const insertPurchasesTranscation = async (header: Omit<PurchasesTransactions, "transact_id">, details: Omit<TransactionDetails, "transact_id" | "detail_id">[]): Promise<{ header: PurchasesTransactions & { supplier_name: string }, details: TransactionDetails[] }> => {

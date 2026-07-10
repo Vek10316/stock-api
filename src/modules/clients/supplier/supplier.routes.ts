@@ -3,7 +3,7 @@ import * as controller from './supplier.controller';
 
 const router = Router();
 
-router.get('/all', controller.readSupplierWithVehicles)
+router.get('/list', controller.listSuppliers)
 
 router.post('/vehicles/', controller.insertSupplierVehicle);
 router.get('/vehicles/:id', controller.getVehiclesBySupplierID);

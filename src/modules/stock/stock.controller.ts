@@ -10,7 +10,7 @@ export const readStock = async (req: Request, res: Response) => {
         const result = await service.readStock({}, {
             sort: {
                 column: "stock_id",
-                direction: "DESC",
+                order: "DESC",
             },
             pagination: {
                 pageNumber: pageNo,
@@ -150,9 +150,24 @@ export const deleteStockPricing = async (req: Request, res: Response) => {
     }
 };
 
-export const readStockWithPrice = async (req: Request, res: Response) => {
+export const listStock = async (req: Request, res: Response) => {
     try {
-        const result = await service.readStockWithPrice(req.body);
+        const query = req.query;
+        const pageNo = query.pageNo !== undefined ? Number.parseInt(query.pageNo as string) : 1;
+        const pageSize = query.pageSize !== undefined ? Number.parseInt(query.pageSize as string) : 100;
+        const search = query.search !== undefined && (query.search as string).trim() !== "" ? query.search as string : undefined;
+        let pagination = {
+            pageNumber: pageNo,
+            pageSize
+        };
+        let sort = {
+            column: "stock_id",
+        };
+        let sqlClauseOptions = {
+            pagination,
+            sort,
+        };
+        const result = await service.listStock({}, sqlClauseOptions, search);
         res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });

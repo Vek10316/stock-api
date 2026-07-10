@@ -14,7 +14,7 @@ export const getSuppliers = async (req: Request, res: Response) => {
             },
             sort: {
                 column: "supplier_id",
-                direction: "DESC",
+                order: "DESC",
             },
         }, search);
         res.json(result);
@@ -84,6 +84,9 @@ export const getSupplierVehicles = async (req: Request, res: Response) => {
             pagination: {
                 pageSize,
                 pageNumber: pageNo,
+            },
+            sort: {
+                column: "vehicle_id"
             }
         }, search);
         res.json(result);
@@ -136,20 +139,24 @@ export const deleteSupplierVehicle = async (req: Request, res: Response) => {
     }
 }
 
-export const readSupplierWithVehicles = async (req: Request, res: Response) => {
+export const listSuppliers = async (req: Request, res: Response) => {
     try {
         const query = req.query;
-        const pageNo = Number.parseInt(query.pageNo as string);
-        const pageSize = Number.parseInt(query.pageSize as string);
+        const pageNo = query.pageNo !== undefined ? Number.parseInt(query.pageNo as string) : 1;
+        const pageSize = query.pageSize !== undefined ? Number.parseInt(query.pageSize as string) : 100;
         const search = query.search as string;
-        const result = await service.readSupplierWithVehicles(undefined, {
+        const result = await service.listSuppliers({}, {
             pagination: {
                 pageSize,
                 pageNumber: pageNo,
-            }
+            },
+            sort: {
+                column: "supplier_id",
+                order: "DESC",
+            },
         }, search);
-        res.status(200).json(result);
+        res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
     }
-}
+};

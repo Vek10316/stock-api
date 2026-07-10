@@ -1,6 +1,7 @@
 import * as repo from './stock.repository';
 import * as StockTypes from './stock.types';
 import type { SqlClauseOptions } from '../../utils/globalHelpers';
+import { ApiPaginatedResponse } from '../../types/api-response.type';
 
 export const readStock = async (filter?: Partial<StockTypes.Stock>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
     if (search !== undefined && search.trim() !== "") {
@@ -23,8 +24,8 @@ export const createStock = async (stock: StockTypes.Stock, prices: Omit<StockTyp
     const stockRes = await repo.createNewStock({
         stock_id: stock.stock_id,
         stock_description: stock.stock_description ?? stock.stock_id,
-        stock_uom: stock.stock_uom ?? "KG",
-        stock_category: stock.stock_category ?? undefined,
+        stock_uom: stock.stock_uom.toUpperCase() ?? "KG",
+        stock_category: stock.stock_category?.toUpperCase() ?? "GENERAL",
         current_quantity: stock.current_quantity ?? 1
     });
 
@@ -44,7 +45,11 @@ export const createStock = async (stock: StockTypes.Stock, prices: Omit<StockTyp
 };
 
 export const updateStock = async (stock_id: string, stock: Partial<StockTypes.Stock>, prices?: Omit<StockTypes.StockPricingHistory, "history_id">) => {
-    const stockRes = await repo.updateStock(stock_id, stock);
+    const stockRes = await repo.updateStock(stock_id, {
+        ...stock, 
+        stock_category: stock.stock_category?.toUpperCase() ?? undefined
+    });
+
     if (prices) {
         await repo.updateStockPrice({
             ...prices,
@@ -104,8 +109,8 @@ export const deleteStockPricing = (id: string) => {
     return repo.deleteStockPrice(id);
 };
 
-export const readStockWithPrice = async (data: Partial<StockTypes.Stock>): Promise<(StockTypes.Stock & { buy_price: number, sell_price: number })[]> => {
-    return await repo.readStockWithPrice(data);
+export const listStock = async (filter?: Partial<StockTypes.Stock>, sqlClauseOptions?: SqlClauseOptions, search?: string): Promise<ApiPaginatedResponse<repo.StockListResponse[]>> => {
+    return await repo.listStock(filter, sqlClauseOptions, search);
 };
 
 export const deleteStockMovementByTransactionID = async (transact_id: string, direction: "IN" | "OUT", stock_id?: string) => {

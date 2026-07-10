@@ -2,21 +2,40 @@ import type { ExpensesRecord } from "./expenses.type";
 import { getPool } from "../../config/db";
 import * as gh from "../../utils/globalHelpers";
 import * as sql from "mssql";
+import { ApiPaginatedResponse } from "../../types/api-response.type";
 
-export const readAllExpenses = async (filter?: Partial<ExpensesRecord>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string) => {
-    const pool = await getPool();
-    let query = "SELECT * FROM expenses_record";
-    if (search !== undefined && search?.trim() !== "") {
+export const readAllExpenses = async (filter?: Partial<ExpensesRecord>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<ApiPaginatedResponse<ExpensesRecord[]>> => {
+    if (search !== undefined && search.trim() !== "") {
         sqlClauseOptions = {
             ...sqlClauseOptions,
             search: {
                 columns: ["expense_id", "expense_category", "expense_amount", "expense_description"],
                 searchQuery: search
-            },
+            }
         }
     }
-    query += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
-    return (await pool.query(query)).recordset;
+    const pool = await getPool();
+    let baseQuery = "SELECT * FROM expenses_record";
+    baseQuery += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
+    const data = (await pool.query(baseQuery)).recordset;
+
+    let totalCountQuery = "SELECT COUNT(expense_id) OVER() AS total_count FROM expenses_record";
+    totalCountQuery += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
+    const totalCount = (await pool.query(totalCountQuery)).recordset[0].total_count;
+
+    const metadata = {
+        pageNo: sqlClauseOptions!.pagination!.pageNumber!,
+        pageSize: sqlClauseOptions!.pagination!.pageSize!,
+        totalCount,
+        totalPages: Math.ceil(totalCount / sqlClauseOptions!.pagination!.pageSize),
+    }
+
+    const response = {
+        data,
+        metadata,
+    }
+
+    return response;
 };
 
 export const readExpenseRecordByID = async (expense_id: number): Promise<ExpensesRecord> => {

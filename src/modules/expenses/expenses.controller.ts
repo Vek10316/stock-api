@@ -4,13 +4,16 @@ import { Request, Response } from "express";
 export const readAllExpenses = async (req: Request, res: Response) => {
     try {
         const query = req.query;
-        const pageNo = Number.parseInt(query.pageNo as string);
-        const pageSize = Number.parseInt(query.pageSize as string);
+        const pageNo = query.pageNo !== undefined ? Number.parseInt(query.pageNo as string) : 1;
+        const pageSize = query.pageSize !== undefined ? Number.parseInt(query.pageSize as string) : 100;
         const search = query.search as string;
         const expenses = await service.readAllExpenses({}, {
             pagination: {
                 pageSize,
                 pageNumber: pageNo,
+            },
+            sort: {
+                column: "expense_id"
             }
         }, search);
         res.json(expenses);

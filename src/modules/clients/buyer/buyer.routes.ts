@@ -3,7 +3,7 @@ import * as controller from './buyer.controller';
 
 const router = Router();
 
-router.get('/all', controller.readBuyerWithVehicles)
+router.get('/list', controller.listBuyers)
 
 router.post('/vehicles/', controller.insertBuyerVehicle);
 router.get('/vehicles/:id', controller.getVehiclesByBuyerID);

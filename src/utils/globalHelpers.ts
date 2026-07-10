@@ -8,11 +8,12 @@ export type ObjectEntries = {
 
 export type SqlSort = {
     column: string;
-    direction?: "ASC" | "DESC";
+    alias?: string | undefined;
+    order?: "ASC" | "DESC";
 };
 
 export type SqlClauseOptions = {
-    prefix?: string | undefined;
+    alias?: string | undefined;
     dateRange?: {
         column: string,
         startDate: Date,
@@ -45,10 +46,10 @@ export const splitObjectEntries = async (o: Object): Promise<ObjectEntries> => {
 
 export const buildSqlConditions = async (o: Object, options?: SqlClauseOptions): Promise<string> => {
     let conditions = "";
-    let prefix = options?.prefix ?? "";
-    if (prefix.trim() !== "") {
-        prefix = prefix.trim();
-        if (!prefix.endsWith(".")) prefix += "."
+    let alias = options?.alias ?? "";
+    if (alias.trim() !== "") {
+        alias = alias.trim();
+        if (!alias.endsWith(".")) alias += "."
     }
     const entries = await splitObjectEntries(o);
     if (options?.search !== undefined && options?.search.searchQuery.trim() !== "") {
@@ -67,23 +68,25 @@ export const buildSqlConditions = async (o: Object, options?: SqlClauseOptions):
                 `${entries.values[i]}` :
                 `'${entries.values[i]}'`
             conditions += !conditions.includes("WHERE") ?
-                ` WHERE ${prefix}${entries.keys[i]} = ${valueToString}` :
-                ` AND ${prefix}${entries.keys[i]} = ${valueToString}`;
+                ` WHERE ${alias}${entries.keys[i]} = ${valueToString}` :
+                ` AND ${alias}${entries.keys[i]} = ${valueToString}`;
         }
     }
     if (options?.dateRange) {
         const startDate = options.dateRange.startDate.toLocaleDateString("en-CA");
         const endDate = options.dateRange.endDate.toLocaleDateString("en-CA");
         conditions += !conditions.includes("WHERE") ?
-            ` WHERE ${prefix}${options.dateRange.column} BETWEEN '${startDate}' AND '${endDate}'` :
-            ` AND ${prefix}${options.dateRange.column} BETWEEN '${startDate}' AND '${endDate}'`;
+            ` WHERE ${alias}${options.dateRange.column} BETWEEN '${startDate}' AND '${endDate}'` :
+            ` AND ${alias}${options.dateRange.column} BETWEEN '${startDate}' AND '${endDate}'`;
     }
     if (options?.sort !== undefined) {
-        conditions += ` ORDER BY ${prefix}${options.sort.column} ${options.sort.direction ?? "ASC"}`;
+        const sortAlias = options?.sort?.alias !== undefined && options?.sort?.alias?.trim() !== "" ?
+            (options.sort.alias?.endsWith(".") ? options.sort.alias : options.sort.alias += ".").trim() : alias;
+        conditions += ` ORDER BY ${sortAlias}${options.sort.column} ${options.sort.order ?? "DESC"}`;
     }
     if (options?.pagination !== undefined && !isNaN(options?.pagination?.pageNumber) && !isNaN(options?.pagination?.pageSize)) {
         if (options?.sort === undefined) {
-            " ORDER BY (SELECT NULL)"
+            throw new Error("Pagination failed, no sort clause!");
         }
         conditions += ` OFFSET ${((options.pagination.pageNumber - 1) * options.pagination.pageSize)} ROWS` +
             ` FETCH NEXT ${options.pagination.pageSize} ROWS ONLY`;
