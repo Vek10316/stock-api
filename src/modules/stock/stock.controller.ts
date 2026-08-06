@@ -25,7 +25,15 @@ export const readStock = async (req: Request, res: Response) => {
 
 export const readStockCategories = async (req: Request, res: Response) => {
     try {
-        const result = await service.readStockCategories();
+        const query = req.query;
+        const pageNo = query.pageNo !== undefined ? Number.parseInt(query.pageNo as string) : 1;
+        const pageSize = query.pageSize !== undefined ? Number.parseInt(query.pageSize as string) : 100;
+        const result = await service.readStockCategories({
+            pagination: {
+                pageNumber: pageNo,
+                pageSize
+            }
+        });
         res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });

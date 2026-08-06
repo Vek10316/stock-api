@@ -74,3 +74,8 @@ export const listBuyers = async (filter?: Partial<Buyer>, sqlClauseOptions?: Sql
     const result = await repo.listBuyers(filter, sqlClauseOptions, search);
     return result;
 };
+
+export const updateBuyerLastTransactDate = async (buyer_id: string, transact_date: Date): Promise<boolean> => {
+    const result = await repo.updateBuyerLastTransactDate(buyer_id, transact_date);
+    return result;
+}

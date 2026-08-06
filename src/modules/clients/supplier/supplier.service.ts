@@ -74,3 +74,8 @@ export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions
     const result = await repo.listSuppliers(filter, sqlClauseOptions, search);
     return result;
 };
+
+export const updateSupplierLastTransactDate = async (supplier_id: string, transact_date: Date): Promise<boolean> => {
+    const result = await repo.updateSupplierLastTransactDate(supplier_id, transact_date);
+    return result;
+}

@@ -36,7 +36,6 @@ export const getSupplierByID = async (req: Request, res: Response) => {
 export const createSupplier = async (req: Request, res: Response) => {
     try {
         const body = req.body;
-        console.log("New insert supplier request: ", body);
         const supplier = body.supplier;
         const vehicles = body.vehicles;
         const result = await service.createSupplier(supplier, vehicles);

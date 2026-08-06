@@ -13,11 +13,32 @@ export const readStock = async (data?: Partial<StockTypes.Stock>, sqlClauseOptio
     return result.recordset;
 };
 
-export const readStockCategories = async () => {
+export const readStockCategories = async (sqlClauseOptions: gh.SqlClauseOptions): Promise<ApiPaginatedResponse<string[]>> => {
+    const pagination = sqlClauseOptions.pagination ?? {
+        pageNumber: 1,
+        pageSize: 100
+    };
+    if (pagination !== undefined) {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            sort: {
+                column: "stock_category",
+                order: "DESC"
+            }
+        }
+    }
     const pool = await getPool();
     let query = "SELECT DISTINCT(stock_category) FROM master_stock";
-    const result = (await pool.query(query)).recordset.map(row => row.stock_category);
-    return result;
+    const result = (await pool.query(query)).recordset.map(row => row.stock_category) as string[];
+    return {
+        data: result,
+        metadata: {
+            pageNo: pagination.pageNumber,
+            pageSize: pagination.pageSize,
+            totalCount: result.length,
+            totalPages: Math.ceil(result.length / pagination.pageSize),
+        }
+    };
 }
 
 export const createNewStock = async (data: StockTypes.Stock): Promise<StockTypes.Stock> => {
@@ -306,7 +327,7 @@ export const listStock = async (filter?: Partial<StockTypes.Stock>, sqlClauseOpt
         sqlClauseOptions = {
             ...sqlClauseOptions,
             search: {
-                columns: ["S.stock_id", "S.stock_description"],
+                columns: ["S.stock_id", "S.stock_description", "S.stock_category"],
                 searchQuery: search
             },
         }

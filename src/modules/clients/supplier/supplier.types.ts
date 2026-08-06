@@ -6,6 +6,7 @@ export type Supplier = {
     supplier_phone?: string;
     supplier_email?: string;
     supplier_tin?: string;
+    last_transact_date?: Date;
 }
 
 export type SupplierVehicles = {

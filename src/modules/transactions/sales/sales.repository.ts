@@ -30,7 +30,7 @@ export const readSalesTransactions = async (filter?: Partial<SalesTransactions>,
 
 export type SalesTransactionListResult = SalesTransactions & { buyer_name: string, total_quantity: number, plate_no: string[] };
 
-export const listPurchaseTransactions = async (filter?: Partial<SalesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string):
+export const listSaleTransactions = async (filter?: Partial<SalesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string):
     Promise<ApiPaginatedResponse<SalesTransactionListResult[]>> => {
 
     if (search !== undefined && search.trim() !== "") {
@@ -184,7 +184,7 @@ export const insertSalesDetails = async (data: Omit<TransactionDetails, "detail_
     return result.rowsAffected.length > 0;
 };
 
-export const updatePurchaseDetails = async (detail_id: number, updateData: Partial<TransactionDetails>, transaction: sql.Transaction): Promise<boolean> => {
+export const updateSaleDetails = async (detail_id: number, updateData: Partial<TransactionDetails>, transaction: sql.Transaction): Promise<boolean> => {
     const query = await gh.buildSqlUpdateQuery("sales_transactions_details", updateData, { detail_id }, transaction);
     const request = new sql.Request(transaction);
     const result = await request.query(query);
@@ -212,7 +212,7 @@ export const getSalesDetailIDs = async (transact_id: string): Promise<string[]> 
     }
 };
 
-export const readFullPurchaseDetails = async (filter?: Partial<SalesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string):
+export const readFullSaleDetails = async (filter?: Partial<SalesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string):
     Promise<{
         header: SalesTransactions,
         details: TransactionDetails[],

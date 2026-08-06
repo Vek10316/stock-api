@@ -16,8 +16,8 @@ export const readStock = async (filter?: Partial<StockTypes.Stock>, sqlClauseOpt
     return await repo.readStock(filter, sqlClauseOptions);
 }
 
-export const readStockCategories = () => {
-    return repo.readStockCategories();
+export const readStockCategories = (sqlClauseOptions: SqlClauseOptions) => {
+    return repo.readStockCategories(sqlClauseOptions);
 }
 
 export const createStock = async (stock: StockTypes.Stock, prices: Omit<StockTypes.StockPricingHistory, "history_id">) => {
@@ -60,7 +60,7 @@ export const updateStock = async (stock_id: string, stock: Partial<StockTypes.St
 
     const pricesRes = (await repo.readStockPricingHistory({ stock_id })).sort((a, b) => {
         return (new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime());
-    })[0]; // Return latest price
+    })[0];
 
     const response = {
         stock: stockRes,

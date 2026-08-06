@@ -187,7 +187,12 @@ export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions
     };
     sqlClauseOptions = {
         ...sqlClauseOptions,
-        alias: "M"
+        alias: "M",
+        sort: {
+            column: "last_transact_date",
+            alias: "M",
+            order: "DESC"
+        }
     };
     const pool = await getPool();
     let baseQuery = `SELECT M.*, V.plate_no` +
@@ -221,3 +226,30 @@ export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions
     }
     return response;
 };
+
+export const updateSupplierLastTransactDate = async (supplier_id: string, transact_date: Date): Promise<boolean> => {
+    const pool = await getPool();
+    const transaction = new sql.Transaction(pool);
+    try {
+        await transaction.begin();
+        const request = new sql.Request(transaction);
+        const updateQuery = await gh.buildSqlUpdateQuery(
+            "master_supplier",
+            { last_transact_date: transact_date },
+            { supplier_id },
+            transaction,
+            request
+        );
+        const result = await request.query(updateQuery);
+        await transaction.commit();
+        return result.rowsAffected[0] > 0;
+    } catch (err) {
+        console.error(`Unhandled exception: `, err);
+        try {
+            transaction.rollback();
+        } catch (rollbackErr) {
+            console.error(`Rollback failed: `, rollbackErr);
+        }
+        throw err;
+    }
+}

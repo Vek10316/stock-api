@@ -25,13 +25,13 @@ export const readSalesTransactions = async (req: Request, res: Response) => {
     }
 };
 
-export const listSalesTransactions = async (req: Request, res: Response) => {
+export const listSaleTransactions = async (req: Request, res: Response) => {
     try {
         const query = req.query;
         const pageSize = query.pageSize !== undefined ? Number.parseFloat(query.pageSize as string) : 100;
         const pageNo = query.pageNo !== undefined ? Number.parseFloat(query.pageNo as string) : 1;
         const search = query.search as string;
-        const result = await service.listSalesTransactions({}, {
+        const result = await service.listSaleTransactions({}, {
             sort: {
                 column: "transact_id",
                 order: "DESC",

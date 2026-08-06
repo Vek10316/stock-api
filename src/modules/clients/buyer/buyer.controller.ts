@@ -36,7 +36,6 @@ export const getBuyerByID = async (req: Request, res: Response) => {
 export const createBuyer = async (req: Request, res: Response) => {
     try {
         const body = req.body;
-        console.log("New insert buyer request: ", body);
         const buyer = body.buyer;
         const vehicles = body.vehicles;
         const result = await service.createBuyer(buyer, vehicles);

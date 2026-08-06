@@ -9,6 +9,7 @@ import { deleteStockMovementByTransactionID as deleteStockMovementByTransactID }
 import { readSupplierName } from '../../clients/supplier/supplier.service';
 import { Supplier, SupplierVehicles } from '../../clients/supplier/supplier.types';
 import type { ApiPaginatedResponse } from '../../../types/api-response.type';
+import { updateSupplierLastTransactDate } from '../../clients/supplier/supplier.service';
 
 export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string | undefined) => {
     const purchases = await repo.readPurchasesTransactions(filter, sqlClauseOptions, search);
@@ -65,6 +66,8 @@ export const insertPurchasesTranscation = async (header: Omit<PurchasesTransacti
         await insertStockMovement(newStockIn);
     }
 
+    await updateSupplierLastTransactDate(header.supplier_id, header.transact_date);
+
     let response: { header: PurchasesTransactions & { supplier_name: string }, details: TransactionDetails[] } = {
         header: {
             ...transact[0],
@@ -97,6 +100,8 @@ export const updatePurchasesTransaction = async (transact_id: string, header: Pa
 
     const transact = await repo.readPurchasesTransactions({ transact_id });
     const transactDetails = await repo.readPurchasesDetails(transact_id);
+    
+    await updateSupplierLastTransactDate(transact[0].supplier_id, transact[0].transact_date);
 
     const response: { header: PurchasesTransactions, details: TransactionDetails[] } = {
         header: transact[0],
