@@ -14,6 +14,7 @@ export const readSuppliers = async (data?: Partial<Supplier>, sqlClauseOptions?:
 export const createSupplier = async (supplier: Supplier, vehicles: Omit<SupplierVehicles, "vehicle_id">[]) => {
     try {
         await repo.createSupplier(supplier);
+        vehicles = vehicles.filter(v => v.plate_no.trim() !== "");
         vehicles.forEach((v) => {
             repo.insertSupplierVehicle(v);
         })

@@ -14,6 +14,7 @@ export const readBuyers = async (data?: Partial<Buyer>, sqlClauseOptions?: SqlCl
 export const createBuyer = async (buyer: Buyer, vehicles: Omit<BuyerVehicles, "vehicle_id">[]) => {
     try {
         await repo.createBuyer(buyer);
+        vehicles = vehicles.filter(v => v.plate_no.trim() !== "");
         vehicles.forEach((v) => {
             repo.insertBuyerVehicle(v);
         })
