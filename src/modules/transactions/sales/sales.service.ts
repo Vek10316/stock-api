@@ -27,7 +27,7 @@ export const readSalesTransactions = async (filter?: Partial<SalesTransactions>,
     return Array.from(response.values());
 };
 
-export const listSaleTransactions = async (filter?: Partial<SalesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string | undefined):
+export const listSalesTransactions = async (filter?: Partial<SalesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string | undefined):
 Promise<ApiPaginatedResponse<SalesTransactions[]>> => {
     const result = await repo.listSaleTransactions(filter, sqlClauseOptions, search);
     return result;
@@ -51,7 +51,7 @@ export const insertSalesTranscation = async (header: Omit<SalesTransactions, "tr
     // Move current quantity calculation & updateStockQuantity here
 
     const result = await repo.insertSalesTransaction(payload, payloadDetails);
-    await updateLatestTransactionID("PURCHASES", result.transact_id);
+    await updateLatestTransactionID("SALES", result.transact_id);
     let transact = await repo.readSalesTransactions({ transact_id: result.transact_id });
     const transactDetails = await repo.readSalesDetails(result.transact_id);
     const buyerName = await readBuyerName(result.buyer_id);
