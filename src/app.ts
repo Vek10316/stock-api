@@ -10,6 +10,7 @@ import apiCallTestRoutes from './modules/generalTests/apiCallTest';
 import exportDataRoutes from './modules/exportData/export-data.routes';
 import reportRoutes from './modules/reports/reports.routes';
 import expensesRecordRoutes from './modules/expenses/expenses.routes';
+import healthRoutes from './modules/health/health.route';
 import 'dotenv/config';
 
 const app = express();
@@ -27,9 +28,6 @@ app.use('/api/test/', apiCallTestRoutes);
 app.use('/api/export/', exportDataRoutes);
 app.use('/api/reports/', reportRoutes);
 app.use('/api/expenses-record/', expensesRecordRoutes);
-
-app.get('/', (req, res) => {
-    res.send('Welcome to the Stock Management API!');
-});
+app.use('/api/health/', healthRoutes);
 
 export default app;
