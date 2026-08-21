@@ -174,8 +174,8 @@ export type ListSupplierResult = Supplier & {
     plate_no: string;
 };
 
-export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string):
-    Promise<ApiPaginatedResponse<ListSupplierResult[]>> => {
+export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string)
+: Promise<ApiPaginatedResponse<ListSupplierResult[]> | ListSupplierResult[]> => {
     if (search !== undefined && search?.trim() !== "") {
         sqlClauseOptions = {
             ...sqlClauseOptions,
@@ -205,7 +205,9 @@ export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions
     const data = (await pool.query(baseQuery)).recordset.map(d => ({
         ...d,
         plate_no: d.plate_no !== null ? d.plate_no.split(", ") : []
-    }));
+    })) as ListSupplierResult[];
+
+    if (sqlClauseOptions.pagination === undefined) return data;
 
     let totalCountQuery = "SELECT COUNT(DISTINCT(M.supplier_id)) AS total_count FROM master_supplier AS M" +
         " LEFT JOIN supplier_vehicles AS V ON M.supplier_id = V.supplier_id";
@@ -218,10 +220,10 @@ export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions
     const response = {
         data,
         metadata: {
-            pageNo: sqlClauseOptions?.pagination?.pageNumber ?? 1,
-            pageSize: sqlClauseOptions?.pagination?.pageSize ?? 100,
+            pageNo: sqlClauseOptions?.pagination.pageNumber,
+            pageSize: sqlClauseOptions?.pagination.pageSize,
             totalCount,
-            totalPages: Math.ceil(totalCount / (sqlClauseOptions?.pagination?.pageSize ?? 100))
+            totalPages: Math.ceil(totalCount / (sqlClauseOptions?.pagination.pageSize))
         }
     }
     return response;
