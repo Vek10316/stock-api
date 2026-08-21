@@ -2,8 +2,18 @@ import * as bukkuService from "./export-to-bukku.service";
 import { Request, Response } from "express";
 
 export const exportSuppliersXlsx = async (req: Request, res: Response) => {
+    const query = req.query;
+    const pageSize = query.pageSize !== undefined ? Number.parseFloat(query.pageSize as string) : undefined;
+    const pageNo = query.pageNo !== undefined ? Number.parseFloat(query.pageNo as string) : undefined;
+    const search = query.search as string;
     try {
-        const workbook = await bukkuService.exportSuppliersXlsx();
+        const workbook = await bukkuService.exportSuppliersXlsx({},
+            pageNo !== undefined && pageSize !== undefined ? {
+                pagination: {
+                    pageNumber: pageNo,
+                    pageSize
+                }
+            } : undefined, search);
         const currentDate = new Date().toLocaleDateString("en-CA", {
             year: "numeric",
             month: "2-digit",
