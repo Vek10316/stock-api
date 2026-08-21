@@ -116,7 +116,7 @@ export const deleteSalesTransaction = async (id: string) => {
 }
 
 export const generateNewTransactionHeaders = async (): Promise<{ transact_id: string, transact_address: string, transact_date: Date }> => {
-    const nextTransactID = await generateNextTransactionID("PURCHASES");
+    const nextTransactID = await generateNextTransactionID("SALES");
     const header = {
         transact_id: nextTransactID,
         transact_address: "22, Jalan Seroja 42, Taman Johor Jaya, 81100 Johor Bahru, Johor",
