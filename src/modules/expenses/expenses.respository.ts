@@ -51,7 +51,6 @@ export const insertNewExpenseRecord = async (expense: Omit<ExpensesRecord, "expe
         await transaction.begin();
         const request = new sql.Request(transaction);
         const query = await gh.buildSqlInsertQuery("expenses_record", expense, transaction, request);
-        console.log(query);
         const res = await request.query(query);
         await transaction.commit();
         return res.rowsAffected[0] > 0;
