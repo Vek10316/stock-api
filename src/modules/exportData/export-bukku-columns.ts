@@ -1,27 +1,3 @@
-export const BukkuPurchaseBillExportColumns = {
-    contact_code: "Contact Code",
-    supplier: "Supplier",
-    invoice_no: "Invoice No.",
-    reference_no: "Reference No.",
-    date: "Date",
-    payment_term: "Payment Term",
-    due_date: "Due Date",
-    currency: "Currency",
-    rate: "Rate",
-    tags: "Tags",
-    description: "Description",
-    product: "Product",
-    account: "Account",
-    item_description: "Item Description",
-    quantity: "Quantity",
-    uom: "UOM",
-    location: "Location",
-    unit_price: "Unit Price",
-    discount: "Discount",
-    tax: "Tax",
-    classification_code: "Classification Code"
-};
-
 export const BukkuContactsExportColumns = {
     contact_code: "Contact Code",
     update_contact_code: "Update Contact Code",
@@ -69,7 +45,99 @@ export const BukkuContactsExportColumns = {
     remarks: "Remarks",
 };
 
-export type BukkuContactsImportTemplate = {
+export const BukkuPurchaseBillExportColumns = {
+    contact_code: "Contact Code",
+    supplier: "Supplier",
+    invoice_no: "Invoice No.",
+    reference_no: "Reference No.",
+    date: "Date",
+    payment_term: "Payment Term",
+    due_date: "Due Date",
+    currency: "Currency",
+    rate: "Rate",
+    tags: "Tags",
+    description: "Description",
+    product: "Product",
+    account: "Account",
+    item_description: "Item Description",
+    quantity: "Quantity",
+    uom: "UOM",
+    location: "Location",
+    unit_price: "Unit Price",
+    discount: "Discount",
+    tax: "Tax",
+    classification_code: "Classification Code"
+};
+
+export const BukkuPurchaseOrderExportColumns = {
+    contact_code: "Contact Code",
+    supplier: "Supplier",
+    invoice_no: "Invoice No.",
+    reference_no: "Reference No.",
+    date: "Date",
+    currency: "Currency",
+    rate: "Rate",
+    tags: "Tags",
+    title: "Title",
+    description: "Description",
+    product: "Product",
+    account: "Account",
+    item_description: "Item Description",
+    quantity: "Quantity",
+    uom: "UOM",
+    location: "Location",
+    unit_price: "Unit Price",
+    discount: "Discount",
+    tax: "Tax",
+}
+
+export const BukkuSaleBillExportColumns = {
+    contact_code: "Contact Code",
+    buyer: "Buyer",
+    invoice_no: "Invoice No.",
+    reference_no: "Reference No.",
+    date: "Date",
+    payment_term: "Payment Term",
+    due_date: "Due Date",
+    currency: "Currency",
+    rate: "Rate",
+    tags: "Tags",
+    description: "Description",
+    product: "Product",
+    account: "Account",
+    item_description: "Item Description",
+    quantity: "Quantity",
+    uom: "UOM",
+    location: "Location",
+    unit_price: "Unit Price",
+    discount: "Discount",
+    tax: "Tax",
+    classification_code: "Classification Code"
+};
+
+export const BukkuSaleOrderExportColumns = {
+    contact_code: "Contact Code",
+    buyer: "Buyer",
+    invoice_no: "Invoice No.",
+    reference_no: "Reference No.",
+    date: "Date",
+    currency: "Currency",
+    rate: "Rate",
+    tags: "Tags",
+    title: "Title",
+    description: "Description",
+    product: "Product",
+    account: "Account",
+    item_description: "Item Description",
+    quantity: "Quantity",
+    uom: "UOM",
+    location: "Location",
+    unit_price: "Unit Price",
+    discount: "Discount",
+    tax: "Tax",
+}
+
+export type BukkuContactsExportTemplate = {
     contact_code: string;
     update_contact_code?: string | undefined;
     legal_name: string;
@@ -116,8 +184,8 @@ export type BukkuContactsImportTemplate = {
     remarks?: string | undefined;
 };
 
-export type BukkuPurchaseBillImportTemplate = {
-    contact_code?: string | undefined;
+export type BukkuPurchaseBillExportTemplate = {
+    contact_code: string;
     supplier: string;
     invoice_no?: string | undefined;
     reference_no: string;
@@ -138,4 +206,72 @@ export type BukkuPurchaseBillImportTemplate = {
     discount?: number | undefined;
     tax?: number | undefined;
     classification_code?: string | undefined;
+};
+
+export type BukkuPurchaseOrderExportTemplate = {
+    contact_code?: string | undefined;
+    supplier: string;
+    invoice_no?: string | undefined;
+    reference_no: string;
+    date: string;
+    currency?: string | undefined;
+    rate?: number | undefined;
+    tags?: string | undefined;
+    title?: string | undefined;
+    description?: string | undefined;
+    product?: string | undefined;
+    account: string;
+    item_description: string;
+    quantity?: number | undefined;
+    uom?: string | undefined;
+    location?: string | undefined;
+    unit_price: number;
+    discount?: number | undefined;
+    tax?: number | undefined;
+};
+
+export type BukkuSaleBillExportTemplate = {
+    contact_code: string;
+    buyer: string;
+    invoice_no?: string | undefined;
+    reference_no: string;
+    date: string;
+    payment_term?: string | undefined;
+    due_date?: string | undefined;
+    currency?: string | undefined;
+    rate?: number | undefined;
+    tags?: string | undefined;
+    description?: string | undefined;
+    product?: string | undefined;
+    account: string;
+    item_description: string;
+    quantity?: number | undefined;
+    uom?: string | undefined;
+    location?: string | undefined;
+    unit_price: number;
+    discount?: number | undefined;
+    tax?: number | undefined;
+    classification_code?: string | undefined;
+};
+
+export type BukkuSaleOrderExportTemplate = {
+    contact_code?: string | undefined;
+    buyer: string;
+    invoice_no?: string | undefined;
+    reference_no: string;
+    date: string;
+    currency?: string | undefined;
+    rate?: number | undefined;
+    tags?: string | undefined;
+    title?: string | undefined;
+    description?: string | undefined;
+    product?: string | undefined;
+    account: string;
+    item_description: string;
+    quantity?: number | undefined;
+    uom?: string | undefined;
+    location?: string | undefined;
+    unit_price: number;
+    discount?: number | undefined;
+    tax?: number | undefined;
 };

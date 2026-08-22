@@ -1,7 +1,7 @@
 import { getPool } from "../../config/db";
 import * as gh from "../../utils/globalHelpers";
 import sql from "mssql";
-import type { 
+import type {
     BukkuContactsSettings,
     BukkuBuyers,
     BukkuSuppliers
@@ -9,11 +9,18 @@ import type {
 import { ApiPaginatedResponse } from "../../types/api-response.type";
 import { SqlClauseOptions } from "../../utils/globalHelpers";
 
+export const readBukkuContactsSetting = async (contact_type: "BUYER" | "SUPPLIER") => {
+    const pool = await getPool();
+    const query = `SELECT * FROM bukku_contacts_settings WHERE contact_type = '${contact_type}'`;
+    const result = await pool.query(query);
+    return result.recordset[0] as BukkuContactsSettings;
+};
+
 export const readLatestContactCode = async (contact_type: "BUYER" | "SUPPLIER") => {
     const pool = await getPool();
-    const query = `SELECT FROM bukku_contacts_settings WHERE contact_type = '${contact_type}'`;
+    const query = `SELECT TOP 1 contact_code FROM bukku_contacts_settings WHERE contact_type = '${contact_type}'`;
     const result = await pool.query(query);
-    return result.recordset;
+    return result.recordset[0] as string;
 };
 
 export const updateLatestContactCode = async (contact_type: "BUYER" | "SUPPLIER", latest_contact_code: string): Promise<boolean> => {
@@ -28,7 +35,7 @@ export const updateLatestContactCode = async (contact_type: "BUYER" | "SUPPLIER"
         const updateCondition: Pick<BukkuContactsSettings, "contact_type"> = {
             contact_type
         };
-        const updateQuery = await gh.buildSqlUpdateQuery("bukku_ocntacts_settings", updateData, updateCondition, transaction, request);
+        const updateQuery = await gh.buildSqlUpdateQuery("bukku_contacts_settings", updateData, updateCondition, transaction, request);
 
         const result = await request.query(updateQuery);
 
@@ -41,12 +48,12 @@ export const updateLatestContactCode = async (contact_type: "BUYER" | "SUPPLIER"
     }
 };
 
-export const readAllBuyerBukkuContactCode = async (filter?: SqlClauseOptions): Promise<BukkuBuyers[]> => {
+export const readAllBuyerBukkuContactCodes = async (): Promise<BukkuBuyers[]> => {
     const pool = await getPool();
     const query = `SELECT * FROM bukku_buyers`;
     const result = await pool.query(query);
     return result.recordset[0];
-}
+};
 
 export const readBuyerBukkuContactCode = async (buyer_id: string): Promise<BukkuBuyers> => {
     const pool = await getPool();
@@ -76,12 +83,12 @@ export const insertBuyerContactCode = async (buyer_id: string, contact_code: str
     }
 };
 
-export const readAllSupplierBukkuContactCode = async (): Promise<BukkuSuppliers[]> => {
+export const readAllSupplierBukkuContactCodes = async (): Promise<BukkuSuppliers[]> => {
     const pool = await getPool();
     const query = `SELECT * FROM bukku_suppliers`;
     const result = await pool.query(query);
-    return result.recordset[0];
-}
+    return result.recordset;
+};
 
 export const readSupplierBukkuContactCode = async (supplier_id: string): Promise<BukkuSuppliers> => {
     const pool = await getPool();
@@ -100,7 +107,7 @@ export const insertSupplierContactCode = async (supplier_id: string, contact_cod
             supplier_id,
             contact_code
         };
-        const insertQuery = await gh.buildSqlInsertQuery("bukku_buyers", insertData, transaction, request);
+        const insertQuery = await gh.buildSqlInsertQuery("bukku_suppliers", insertData, transaction, request);
         await request.query(insertQuery);
         await transaction.commit();
         return insertData as BukkuSuppliers;
