@@ -6,8 +6,6 @@ import type {
     BukkuBuyers,
     BukkuSuppliers
 } from "./export-to-bukku.types";
-import { ApiPaginatedResponse } from "../../types/api-response.type";
-import { SqlClauseOptions } from "../../utils/globalHelpers";
 
 export const readBukkuContactsSetting = async (contact_type: "BUYER" | "SUPPLIER") => {
     const pool = await getPool();
@@ -52,7 +50,7 @@ export const readAllBuyerBukkuContactCodes = async (): Promise<BukkuBuyers[]> =>
     const pool = await getPool();
     const query = `SELECT * FROM bukku_buyers`;
     const result = await pool.query(query);
-    return result.recordset[0];
+    return result.recordset;
 };
 
 export const readBuyerBukkuContactCode = async (buyer_id: string): Promise<BukkuBuyers> => {
