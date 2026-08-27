@@ -30,7 +30,6 @@ export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransa
     try {
         let query = `SELECT ${maxRows !== undefined ? `TOP ${maxRows} ` : ""}* FROM purchases_transactions`;
         query += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
-        console.log(`Read purchases query: ${query}`);
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
