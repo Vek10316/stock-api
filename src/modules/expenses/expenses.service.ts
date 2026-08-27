@@ -1,6 +1,7 @@
 import * as repo from "./expenses.respository";
 import type { ExpensesRecord } from "./expenses.type";
 import type { SqlClauseOptions } from "../../utils/globalHelpers";
+import { DateRange } from "../../types/api-response.type";
 
 export const readAllExpenses = async (filter?: Partial<ExpensesRecord>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
     return await repo.readAllExpenses(filter, sqlClauseOptions, search);
@@ -23,6 +24,6 @@ export const updateExpenseRecord = async (id: string, updateData: Partial<Expens
     return await repo.readExpenseRecordByID(Number.parseInt(id));
 };
 
-export  const readMonthlyExpensesTotal = async (startDate: Date, endDate: Date) => {
-    return await repo.readMonthlyExpensesTotal(startDate, endDate);
+export  const readMonthlyExpensesTotal = async (dateRange: DateRange) => {
+    return await repo.readMonthlyExpensesTotal(dateRange);
 };

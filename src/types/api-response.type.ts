@@ -7,3 +7,8 @@ export type ApiPaginatedResponse<T extends object = any> = {
         totalCount: number;
     };
 };
+
+export type DateRange = {
+    startDate: Date;
+    endDate: Date;
+}

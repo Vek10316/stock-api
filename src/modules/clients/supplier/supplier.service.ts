@@ -18,16 +18,16 @@ export const createSupplier = async (supplier: Supplier, vehicles: Omit<Supplier
         vehicles.forEach((v) => {
             repo.insertSupplierVehicle(v);
         })
-        let result = await repo.listSuppliers({supplier_id: supplier.supplier_id});
+        let result = await repo.listSuppliers({ supplier_id: supplier.supplier_id });
         return result;
     } catch (err: any) {
         console.error("Failed to insert supplier: ", err);
     }
 };
 
-export const updateSupplier = async (supplier_id: string, supplier: Partial<Supplier>, vehicles: Omit<SupplierVehicles, "vehicle_id">[]): Promise<{supplier: Supplier, vehicles: SupplierVehicles[]}> => {
+export const updateSupplier = async (supplier_id: string, supplier: Partial<Supplier>, vehicles: Omit<SupplierVehicles, "vehicle_id">[]): Promise<{ supplier: Supplier, vehicles: SupplierVehicles[] }> => {
     const supplierRes = await repo.updateSupplier(supplier_id, supplier);
-    const vehicleIDs = (await repo.readSupplierVehicles({supplier_id})).map(s => s.vehicle_id);
+    const vehicleIDs = (await repo.readSupplierVehicles({ supplier_id })).map(s => s.vehicle_id);
     vehicleIDs.forEach(async v => {
         await repo.deleteSupplierVehicle(v)
     });
@@ -36,7 +36,7 @@ export const updateSupplier = async (supplier_id: string, supplier: Partial<Supp
         await repo.insertSupplierVehicle(v);
     });
 
-    const vehiclesRes = await repo.readSupplierVehicles({supplier_id});
+    const vehiclesRes = await repo.readSupplierVehicles({ supplier_id });
 
     const response = {
         supplier: supplierRes,
@@ -71,7 +71,7 @@ export const readSupplierName = (supplier_id: string): Promise<string> => {
 };
 
 export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions?: SqlClauseOptions, search?: string)
-:Promise<ApiPaginatedResponse<(Supplier & {plate_no: string})[]>> => {
+    : Promise<ApiPaginatedResponse<(Supplier & { plate_no: string })[]> | repo.ListSupplierResult[]> => {
     const result = await repo.listSuppliers(filter, sqlClauseOptions, search);
     return result;
 };

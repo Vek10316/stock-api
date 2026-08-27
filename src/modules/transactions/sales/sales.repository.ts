@@ -4,9 +4,10 @@ import * as gh from '../../../utils/globalHelpers';
 import type { SalesTransactions } from './sales.types';
 import type { TransactionDetails } from '../shared.transactions.types';
 import type { Buyer, BuyerVehicles } from '../../clients/buyer/buyer.types';
-import type { ApiPaginatedResponse } from '../../../types/api-response.type';
+import type { ApiPaginatedResponse, DateRange } from '../../../types/api-response.type';
 
 export const readSalesTransactions = async (filter?: Partial<SalesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<SalesTransactions[]> => {
+    const pool = await getPool();
     if (search !== undefined && search?.trim() !== "") {
         sqlClauseOptions = {
             ...sqlClauseOptions,
@@ -16,10 +17,20 @@ export const readSalesTransactions = async (filter?: Partial<SalesTransactions>,
             },
         };
     };
-    const pool = await getPool();
+    if (sqlClauseOptions?.dateRange !== undefined) { 
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            dateRange: {
+                ...sqlClauseOptions.dateRange,
+                column: "transact_date",
+            }
+        }
+    }
+    const maxRows = sqlClauseOptions?.maxRows;
     try {
-        let query = "SELECT * FROM sales_transactions";
+        let query = `SELECT ${maxRows !== undefined ? `TOP ${maxRows} ` : ""}* FROM sales_transactions`;
         query += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
+        console.log(`Read sales query: ${query}`);
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
@@ -313,26 +324,28 @@ export const getSoldTotalQuantity = async (transact_id: string): Promise<number>
     return result.total_quantity;
 };
 
-export const readSalesByDateRange = async (startDate: Date, endDate: Date): Promise<SalesTransactions[]> => {
+export const readSalesByDateRange = async (dateRange: DateRange): Promise<SalesTransactions[]> => {
     const pool = await getPool();
-    const query = `SELECT * FROM sales_transactions WHERE transact_date BETWEEN ${startDate.toLocaleDateString("en-CA")} AND ${endDate.toLocaleDateString("en-CA")}`;
+    const start = dateRange.startDate.toLocaleDateString("en-CA");
+    const end = dateRange.endDate.toLocaleDateString("en-CA");
+    const query = `SELECT * FROM sales_transactions WHERE transact_date BETWEEN ${start} AND ${end}`;
     const result = (await pool.query(query)).recordset;
     return result;
 };
 
-export const readSalesTotalByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<SalesTransactions, "transact_total_amount">> => {
+export const readSalesTotalByDateRange = async (dateRange: DateRange): Promise<Pick<SalesTransactions, "transact_total_amount">> => {
     const pool = await getPool();
-    const start = startDate.toLocaleDateString('en-CA');
-    const end = endDate.toLocaleDateString('en-CA');
+    const start = dateRange.startDate.toLocaleDateString('en-CA');
+    const end = dateRange.endDate.toLocaleDateString('en-CA');
     const query = `SELECT SUM(transact_total_amount) as transact_total_amount FROM sales_transactions WHERE transact_date BETWEEN '${start}' AND '${end}'`
     const result = (await pool.query(query)).recordset[0].transact_total_amount as Pick<SalesTransactions, "transact_total_amount">;
     return result;
 }
 
-export const readSoldItemsByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
+export const readSoldItemsByDateRange = async (dateRange: DateRange): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
     const pool = await getPool();
-    const start = startDate.toLocaleDateString('en-CA');
-    const end = endDate.toLocaleDateString('en-CA');
+    const start = dateRange.startDate.toLocaleDateString('en-CA');
+    const end = dateRange.endDate.toLocaleDateString('en-CA');
     const query = `SELECT stock_id, SUM(item_quantity) AS item_quantity FROM sales_transactions_details WHERE transact_id IN (` +
         `SELECT transact_id FROM sales_transactions WHERE transact_date BETWEEN '${start}' AND '${end}'` +
         `) GROUP BY stock_id;`;

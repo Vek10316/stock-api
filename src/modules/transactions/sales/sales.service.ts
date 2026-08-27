@@ -8,7 +8,7 @@ import type * as StockTypes from '../../stock/stock.types';
 import { deleteStockMovementByTransactionID as deleteStockMovementByTransactID } from '../../stock/stock.repository';
 import { readBuyerName } from '../../clients/buyer/buyer.service';
 import { Buyer, BuyerVehicles } from '../../clients/buyer/buyer.types';
-import type { ApiPaginatedResponse } from '../../../types/api-response.type';
+import type { ApiPaginatedResponse, DateRange } from '../../../types/api-response.type';
 import { updateBuyerLastTransactDate } from '../../clients/buyer/buyer.service';
 
 export const readSalesTransactions = async (filter?: Partial<SalesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string | undefined) => {
@@ -51,7 +51,7 @@ export const insertSalesTranscation = async (header: Omit<SalesTransactions, "tr
     // Move current quantity calculation & updateStockQuantity here
 
     const result = await repo.insertSalesTransaction(payload, payloadDetails);
-    await updateLatestTransactionID("SALES", result.transact_id);
+    await updateLatestTransactionID("PURCHASES", result.transact_id);
     let transact = await repo.readSalesTransactions({ transact_id: result.transact_id });
     const transactDetails = await repo.readSalesDetails(result.transact_id);
     const buyerName = await readBuyerName(result.buyer_id);
@@ -116,7 +116,7 @@ export const deleteSalesTransaction = async (id: string) => {
 }
 
 export const generateNewTransactionHeaders = async (): Promise<{ transact_id: string, transact_address: string, transact_date: Date }> => {
-    const nextTransactID = await generateNextTransactionID("SALES");
+    const nextTransactID = await generateNextTransactionID("PURCHASES");
     const header = {
         transact_id: nextTransactID,
         transact_address: "22, Jalan Seroja 42, Taman Johor Jaya, 81100 Johor Bahru, Johor",
@@ -149,14 +149,14 @@ export const readSalesDetails = async (transact_id: string): Promise<{ header: S
     return response;
 }
 
-export const readSalesByDateRange = async (startDate: Date, endDate: Date): Promise<SalesTransactions[]> => {
-    return await repo.readSalesByDateRange(startDate, endDate);
+export const readSalesByDateRange = async (dateRange: DateRange): Promise<SalesTransactions[]> => {
+    return await repo.readSalesByDateRange(dateRange);
 };
 
-export const readSalesTotalByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<SalesTransactions, "transact_total_amount">> => {
-    return await repo.readSalesTotalByDateRange(startDate, endDate);
+export const readSalesTotalByDateRange = async (dateRange: DateRange): Promise<Pick<SalesTransactions, "transact_total_amount">> => {
+    return await repo.readSalesTotalByDateRange(dateRange);
 }
 
-export const readSoldItemsByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
-    return await repo.readSoldItemsByDateRange(startDate, endDate);
+export const readSoldItemsByDateRange = async (dateRange: DateRange): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
+    return await repo.readSoldItemsByDateRange(dateRange);
 };

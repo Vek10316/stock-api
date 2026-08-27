@@ -175,7 +175,7 @@ export type ListBuyerResult = Buyer & {
 };
 
 export const listBuyers = async (filter?: Partial<Buyer>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string)
-: Promise<ApiPaginatedResponse<ListBuyerResult[]> | ListBuyerResult[]> => {
+    : Promise<ApiPaginatedResponse<ListBuyerResult[]> | ListBuyerResult[]> => {
     if (search !== undefined && search?.trim() !== "") {
         sqlClauseOptions = {
             ...sqlClauseOptions,
@@ -184,6 +184,15 @@ export const listBuyers = async (filter?: Partial<Buyer>, sqlClauseOptions?: gh.
                 searchQuery: search
             }
         };
+    };
+    if (sqlClauseOptions?.dateRange !== undefined) {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            dateRange: {
+                ...sqlClauseOptions.dateRange,
+                column: "M.last_transact_date"
+            }
+        }
     };
     sqlClauseOptions = {
         ...sqlClauseOptions,
@@ -194,8 +203,9 @@ export const listBuyers = async (filter?: Partial<Buyer>, sqlClauseOptions?: gh.
             order: "DESC"
         }
     };
+    const maxRows = sqlClauseOptions?.maxRows;
     const pool = await getPool();
-    let baseQuery = `SELECT M.*, V.plate_no` +
+    let baseQuery = `SELECT ${maxRows !== undefined ? `TOP ${maxRows} ` : ""}M.*, V.plate_no` +
         ` FROM master_buyer AS M` +
         ` LEFT JOIN (` +
         ` SELECT buyer_id, STRING_AGG(plate_no, ', ') AS plate_no` +

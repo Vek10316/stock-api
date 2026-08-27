@@ -1,60 +1,57 @@
-import * as purchases from "../transactions/purchases/purchases.service";
-import * as sales from "../transactions/sales/sales.service";
-import * as expenses from "../expenses/expenses.service";
+import * as purchasesService from "../transactions/purchases/purchases.service";
+import * as salesService from "../transactions/sales/sales.service";
+import * as expensesService from "../expenses/expenses.service";
+import * as supplierService from "../clients/supplier/supplier.service";
+import type { SqlClauseOptions } from "../../utils/globalHelpers";
+import type { DateRange } from "../../types/api-response.type";
 
-export const readMonthlyPurchasesTotal = async (date: string) => {
+export const readMonthlyPurchasesTotal = async (dateRange: DateRange) => {
     try {
-        const { firstDay, lastDay } = await readFirstAndLastDay(date);
-        const monthlyPurchases = await purchases.readPurchasesTotalByDateRange(firstDay, lastDay);
+        const monthlyPurchases = await purchasesService.readPurchasesTotalByDateRange(dateRange);
         return monthlyPurchases;
     } catch (err) {
         console.error(err);
+        throw err;
      };
 };
 
-export const readMonthlyPurchasedItems = async (date: string) => {
+export const readMonthlyPurchasedItems = async (dateRange: DateRange) => {
     try {
-        const { firstDay, lastDay } = await readFirstAndLastDay(date);
-
-        const monthlyPurchasedItems = await purchases.readPurchasedItemsByDateRange(firstDay, lastDay);
-
+        const monthlyPurchasedItems = await purchasesService.readPurchasedItemsByDateRange(dateRange);
         return monthlyPurchasedItems;
     } catch (err) {
         console.error(err);
+        throw err;
      };
 };
 
-export const readMonthlySalesTotal = async (date: string) => {
+export const readMonthlySalesTotal = async (dateRange: DateRange) => {
     try {
-        const { firstDay, lastDay } = await readFirstAndLastDay(date);
-        const monthlySales = await sales.readSalesTotalByDateRange(firstDay, lastDay);
+        const monthlySales = await salesService.readSalesTotalByDateRange(dateRange);
         return monthlySales;
     } catch (err) {
         console.error(err);
+        throw err;
      };
 };
 
-export const readMonthlySoldItems = async (date: string) => {
+export const readMonthlySoldItems = async (dateRange: DateRange) => {
     try {
-        const { firstDay, lastDay } = await readFirstAndLastDay(date);
-
-        const monthlyPurchasedItems = await sales.readSoldItemsByDateRange(firstDay, lastDay);
-
+        const monthlyPurchasedItems = await salesService.readSoldItemsByDateRange(dateRange);
         return monthlyPurchasedItems;
     } catch (err) {
         console.error(err);
+        throw err;
      };
 };
 
-export const readMonthlyExpenses = async (date: string) => {
+export const readMonthlyExpenses = async (dateRange: DateRange) => {
     try {
-        const { firstDay, lastDay } = await readFirstAndLastDay(date);
-
-        const monthlyExpenses = await expenses.readMonthlyExpensesTotal(firstDay, lastDay);
-
+        const monthlyExpenses = await expensesService.readMonthlyExpensesTotal(dateRange);
         return monthlyExpenses;
     } catch (err) {
         console.error(err);
+        throw err;
      };
 }
 

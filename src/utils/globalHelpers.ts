@@ -13,6 +13,7 @@ export type SqlSort = {
 };
 
 export type SqlClauseOptions = {
+    maxRows?: number | undefined;
     alias?: string | undefined;
     dateRange?: {
         column: string,
@@ -73,8 +74,24 @@ export const buildSqlConditions = async (o: Object, options?: SqlClauseOptions):
         }
     }
     if (options?.dateRange) {
-        const startDate = options.dateRange.startDate.toLocaleDateString("en-CA");
-        const endDate = options.dateRange.endDate.toLocaleDateString("en-CA");
+        const startDate = options.dateRange.startDate.toLocaleDateString('en-CA', {
+            year: "numeric",
+            month: "numeric",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            second: "numeric",
+            hour12: false,
+        }).replace(",", "");
+        const endDate = options.dateRange.endDate.toLocaleDateString('en-CA', {
+            year: "numeric",
+            month: "numeric",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            second: "numeric",
+            hour12: false,
+        }).replace(",", "");
         conditions += !conditions.includes("WHERE") ?
             ` WHERE ${alias}${options.dateRange.column} BETWEEN '${startDate}' AND '${endDate}'` :
             ` AND ${alias}${options.dateRange.column} BETWEEN '${startDate}' AND '${endDate}'`;

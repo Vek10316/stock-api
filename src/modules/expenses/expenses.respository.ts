@@ -2,7 +2,7 @@ import type { ExpensesRecord } from "./expenses.type";
 import { getPool } from "../../config/db";
 import * as gh from "../../utils/globalHelpers";
 import * as sql from "mssql";
-import { ApiPaginatedResponse } from "../../types/api-response.type";
+import { ApiPaginatedResponse, DateRange } from "../../types/api-response.type";
 
 export const readAllExpenses = async (filter?: Partial<ExpensesRecord>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<ApiPaginatedResponse<ExpensesRecord[]>> => {
     if (search !== undefined && search.trim() !== "") {
@@ -74,10 +74,10 @@ export const updateExpenseRecord = async (expense_id: number, expense: Partial<E
     }
 };
 
-export const readMonthlyExpensesTotal = async (startDate: Date, endDate: Date) => {
+export const readMonthlyExpensesTotal = async (dateRange: DateRange) => {
     const pool = await getPool();
-    const start = startDate.toLocaleDateString("en-CA");
-    const end = endDate.toLocaleDateString("en-CA");
+    const start = dateRange.startDate.toLocaleDateString("en-CA");
+    const end = dateRange.endDate.toLocaleDateString("en-CA");
     const query = `SELECT SUM(expense_amount) as expense_amount FROM expenses_record WHERE expense_date BETWEEN '${start}' AND '${end}'`;
     const res = (await pool.query(query)).recordset[0].expense_amount;
     return res;

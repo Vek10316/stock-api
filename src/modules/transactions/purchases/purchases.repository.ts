@@ -4,9 +4,10 @@ import * as gh from '../../../utils/globalHelpers';
 import type { PurchasesTransactions } from './purchases.types';
 import type { TransactionDetails } from '../shared.transactions.types';
 import type { Supplier, SupplierVehicles } from '../../clients/supplier/supplier.types';
-import type { ApiPaginatedResponse } from '../../../types/api-response.type';
+import type { ApiPaginatedResponse, DateRange } from '../../../types/api-response.type';
 
 export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<PurchasesTransactions[]> => {
+    const pool = await getPool();
     if (search !== undefined && search?.trim() !== "") {
         sqlClauseOptions = {
             ...sqlClauseOptions,
@@ -16,10 +17,20 @@ export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransa
             },
         };
     };
-    const pool = await getPool();
+    if (sqlClauseOptions?.dateRange !== undefined) { 
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            dateRange: {
+                ...sqlClauseOptions.dateRange,
+                column: "transact_date",
+            }
+        }
+    }
+    const maxRows = sqlClauseOptions?.maxRows;
     try {
-        let query = "SELECT * FROM purchases_transactions";
+        let query = `SELECT ${maxRows !== undefined ? `TOP ${maxRows} ` : ""}* FROM purchases_transactions`;
         query += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
+        console.log(`Read purchases query: ${query}`);
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
@@ -313,26 +324,28 @@ export const getPurchasedTotalQuantity = async (transact_id: string): Promise<nu
     return result.total_quantity;
 };
 
-export const readPurchasesByDateRange = async (startDate: Date, endDate: Date): Promise<PurchasesTransactions[]> => {
+export const readPurchasesByDateRange = async (dateRange: DateRange): Promise<PurchasesTransactions[]> => {
     const pool = await getPool();
-    const query = `SELECT * FROM purchases_transactions WHERE transact_date BETWEEN ${startDate.toLocaleDateString("en-CA")} AND ${endDate.toLocaleDateString("en-CA")}`;
+    const start = dateRange.startDate.toLocaleDateString("en-CA");
+    const end = dateRange.endDate.toLocaleDateString("en-CA");
+    const query = `SELECT * FROM purchases_transactions WHERE transact_date BETWEEN ${start} AND ${end}`;
     const result = (await pool.query(query)).recordset;
     return result;
 };
 
-export const readPurchasesTotalByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<PurchasesTransactions, "transact_total_amount">> => {
+export const readPurchasesTotalByDateRange = async (dateRange: DateRange): Promise<Pick<PurchasesTransactions, "transact_total_amount">> => {
     const pool = await getPool();
-    const start = startDate.toLocaleDateString('en-CA');
-    const end = endDate.toLocaleDateString('en-CA');
+    const start = dateRange.startDate.toLocaleDateString('en-CA');
+    const end = dateRange.endDate.toLocaleDateString('en-CA');
     const query = `SELECT SUM(transact_total_amount) as transact_total_amount FROM purchases_transactions WHERE transact_date BETWEEN '${start}' AND '${end}'`
     const result = (await pool.query(query)).recordset[0].transact_total_amount as Pick<PurchasesTransactions, "transact_total_amount">;
     return result;
 }
 
-export const readPurchasedItemsByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
+export const readPurchasedItemsByDateRange = async (dateRange: DateRange): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
     const pool = await getPool();
-    const start = startDate.toLocaleDateString('en-CA');
-    const end = endDate.toLocaleDateString('en-CA');
+    const start = dateRange.startDate.toLocaleDateString('en-CA');
+    const end = dateRange.endDate.toLocaleDateString('en-CA');
     const query = `SELECT stock_id, SUM(item_quantity) AS item_quantity FROM purchases_transactions_details WHERE transact_id IN (` +
         `SELECT transact_id FROM purchases_transactions WHERE transact_date BETWEEN '${start}' AND '${end}'` +
         `) GROUP BY stock_id;`;

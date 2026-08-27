@@ -8,7 +8,7 @@ import type * as StockTypes from '../../stock/stock.types';
 import { deleteStockMovementByTransactionID as deleteStockMovementByTransactID } from '../../stock/stock.repository';
 import { readSupplierName } from '../../clients/supplier/supplier.service';
 import { Supplier, SupplierVehicles } from '../../clients/supplier/supplier.types';
-import type { ApiPaginatedResponse } from '../../../types/api-response.type';
+import type { ApiPaginatedResponse, DateRange } from '../../../types/api-response.type';
 import { updateSupplierLastTransactDate } from '../../clients/supplier/supplier.service';
 
 export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string | undefined) => {
@@ -149,14 +149,14 @@ export const readPurchasesDetails = async (transact_id: string): Promise<{ heade
     return response;
 }
 
-export const readPurchasesByDateRange = async (startDate: Date, endDate: Date): Promise<PurchasesTransactions[]> => {
-    return await repo.readPurchasesByDateRange(startDate, endDate);
+export const readPurchasesByDateRange = async (dateRange: DateRange): Promise<PurchasesTransactions[]> => {
+    return await repo.readPurchasesByDateRange(dateRange);
 };
 
-export const readPurchasesTotalByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<PurchasesTransactions, "transact_total_amount">> => {
-    return await repo.readPurchasesTotalByDateRange(startDate, endDate);
+export const readPurchasesTotalByDateRange = async (dateRange: DateRange): Promise<Pick<PurchasesTransactions, "transact_total_amount">> => {
+    return await repo.readPurchasesTotalByDateRange(dateRange);
 }
 
-export const readPurchasedItemsByDateRange = async (startDate: Date, endDate: Date): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
-    return await repo.readPurchasedItemsByDateRange(startDate, endDate);
+export const readPurchasedItemsByDateRange = async (dateRange: DateRange): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
+    return await repo.readPurchasedItemsByDateRange(dateRange);
 };

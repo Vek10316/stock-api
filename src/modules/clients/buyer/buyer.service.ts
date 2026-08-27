@@ -18,16 +18,16 @@ export const createBuyer = async (buyer: Buyer, vehicles: Omit<BuyerVehicles, "v
         vehicles.forEach((v) => {
             repo.insertBuyerVehicle(v);
         })
-        let result = await repo.listBuyers({buyer_id: buyer.buyer_id});
+        let result = await repo.listBuyers({ buyer_id: buyer.buyer_id });
         return result;
     } catch (err: any) {
         console.error("Failed to insert buyer: ", err);
     }
 };
 
-export const updateBuyer = async (buyer_id: string, buyer: Partial<Buyer>, vehicles: Omit<BuyerVehicles, "vehicle_id">[]): Promise<{buyer: Buyer, vehicles: BuyerVehicles[]}> => {
+export const updateBuyer = async (buyer_id: string, buyer: Partial<Buyer>, vehicles: Omit<BuyerVehicles, "vehicle_id">[]): Promise<{ buyer: Buyer, vehicles: BuyerVehicles[] }> => {
     const buyerRes = await repo.updateBuyer(buyer_id, buyer);
-    const vehicleIDs = (await repo.readBuyerVehicles({buyer_id})).map(s => s.vehicle_id);
+    const vehicleIDs = (await repo.readBuyerVehicles({ buyer_id })).map(s => s.vehicle_id);
     vehicleIDs.forEach(async v => {
         await repo.deleteBuyerVehicle(v)
     });
@@ -36,7 +36,7 @@ export const updateBuyer = async (buyer_id: string, buyer: Partial<Buyer>, vehic
         await repo.insertBuyerVehicle(v);
     });
 
-    const vehiclesRes = await repo.readBuyerVehicles({buyer_id});
+    const vehiclesRes = await repo.readBuyerVehicles({ buyer_id });
 
     const response = {
         buyer: buyerRes,
@@ -71,7 +71,7 @@ export const readBuyerName = (buyer_id: string): Promise<string> => {
 };
 
 export const listBuyers = async (filter?: Partial<Buyer>, sqlClauseOptions?: SqlClauseOptions, search?: string)
-:Promise<ApiPaginatedResponse<(Buyer & {plate_no: string})[]>> => {
+    : Promise<ApiPaginatedResponse<(Buyer & { plate_no: string })[]> | repo.ListBuyerResult[]> => {
     const result = await repo.listBuyers(filter, sqlClauseOptions, search);
     return result;
 };

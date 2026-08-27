@@ -26,6 +26,10 @@ import type {
 import { SqlClauseOptions } from '../../utils/globalHelpers';
 
 export const previewBukkuSuppliers = async (filter?: Partial<SupplierTypes.Supplier>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
+    sqlClauseOptions = {
+        ...sqlClauseOptions,
+        maxRows: 100
+    };
     const suppliers = await supplierRepo.listSuppliers(filter, sqlClauseOptions, search) as supplierRepo.ListSupplierResult[];
     let contactCodes = await readAllSupplierBukkuContactCodes();
     try {
@@ -40,8 +44,7 @@ export const previewBukkuSuppliers = async (filter?: Partial<SupplierTypes.Suppl
             }
             contactCodes = await readAllSupplierBukkuContactCodes();
         }
-    } catch (err: any) {
-        console.error(err);
+    } catch (err) {
         throw err;
     }
 
@@ -70,10 +73,13 @@ export const previewBukkuSuppliers = async (filter?: Partial<SupplierTypes.Suppl
 }
 
 export const previewBukkuPurchasesBill = async (filter?: Partial<PurchasesTypes.PurchasesTransactions>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
-    const purchases = await purchasesRepo.readPurchasesTransactions(filter);
+    sqlClauseOptions = {
+        ...sqlClauseOptions,
+        maxRows: 100
+    };
+    const purchases = await purchasesRepo.readPurchasesTransactions(filter, sqlClauseOptions, search);
     let contactCodes = await readAllSupplierBukkuContactCodes();
     const supplierIDs = new Set(purchases.map(purchase => purchase.supplier_id));
-
     try {
         if (contactCodes === undefined || contactCodes.length !== supplierIDs.size) {
             const noContactCodes = contactCodes === undefined ?
@@ -85,8 +91,7 @@ export const previewBukkuPurchasesBill = async (filter?: Partial<PurchasesTypes.
             }
             contactCodes = await readAllSupplierBukkuContactCodes();
         }
-    } catch (err: any) {
-        console.error(err);
+    } catch (err) {
         throw err;
     }
 
@@ -98,7 +103,7 @@ export const previewBukkuPurchasesBill = async (filter?: Partial<PurchasesTypes.
         }
     });
     const purchasesMap: { header: PurchasesTypes.PurchasesTransactions & { contact_code: string }, details: TransactionDetails }[] = [];
-    purchases.forEach(async (purchase) => {
+    await Promise.all(purchases.map(async (purchase) => {
         const contactCode = contactCodes.find(c => c.supplier_id === purchase.supplier_id)!.contact_code;
         const details = await purchasesRepo.readPurchasesDetails(purchase.transact_id);
         details.forEach(detail => {
@@ -110,7 +115,7 @@ export const previewBukkuPurchasesBill = async (filter?: Partial<PurchasesTypes.
                 details: detail,
             });
         })
-    });
+    }));
     const stockDetails = await stockRepo.readStock();
     const stockMap = new Map<string, Stock>();
     stockDetails.forEach(detail => {
@@ -147,6 +152,10 @@ export const previewBukkuPurchasesBill = async (filter?: Partial<PurchasesTypes.
 };
 
 export const previewBukkuBuyers = async (filter?: Partial<BuyerTypes.Buyer>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
+    sqlClauseOptions = {
+        ...sqlClauseOptions,
+        maxRows: 100
+    };
     const buyers = await buyerRepo.listBuyers(filter, sqlClauseOptions, search) as buyerRepo.ListBuyerResult[];
     let contactCodes = await readAllBuyerBukkuContactCodes();
     try {
@@ -161,8 +170,8 @@ export const previewBukkuBuyers = async (filter?: Partial<BuyerTypes.Buyer>, sql
             }
             contactCodes = await readAllBuyerBukkuContactCodes();
         }
-    } catch (err: any) {
-        console.error(err);
+    } catch (err) {
+        
         throw err;
     }
 
@@ -191,7 +200,11 @@ export const previewBukkuBuyers = async (filter?: Partial<BuyerTypes.Buyer>, sql
 }
 
 export const previewBukkuSalesBill = async (filter?: Partial<SalesTypes.SalesTransactions>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
-    const sales = await salesRepo.readSalesTransactions(filter);
+    sqlClauseOptions = {
+        ...sqlClauseOptions,
+        maxRows: 100
+    };
+    const sales = await salesRepo.readSalesTransactions(filter, sqlClauseOptions, search);
     let contactCodes = await readAllBuyerBukkuContactCodes();
     const buyerIDs = new Set(sales.map(sale => sale.buyer_id));
 
@@ -206,8 +219,8 @@ export const previewBukkuSalesBill = async (filter?: Partial<SalesTypes.SalesTra
             }
             contactCodes = await readAllBuyerBukkuContactCodes();
         }
-    } catch (err: any) {
-        console.error(err);
+    } catch (err) {
+        
         throw err;
     }
 
@@ -219,7 +232,7 @@ export const previewBukkuSalesBill = async (filter?: Partial<SalesTypes.SalesTra
         }
     });
     const salesMap: { header: SalesTypes.SalesTransactions & { contact_code: string }, details: TransactionDetails }[] = [];
-    sales.forEach(async (sale) => {
+    await Promise.all(sales.map(async (sale) => {
         const contactCode = contactCodes.find(c => c.buyer_id === sale.buyer_id)!.contact_code;
         const details = await salesRepo.readSalesDetails(sale.transact_id);
         details.forEach(detail => {
@@ -231,7 +244,7 @@ export const previewBukkuSalesBill = async (filter?: Partial<SalesTypes.SalesTra
                 details: detail,
             });
         })
-    });
+    }));
     const stockDetails = await stockRepo.readStock();
     const stockMap = new Map<string, Stock>();
     stockDetails.forEach(detail => {
@@ -282,8 +295,8 @@ export const exportBukkuSuppliersXlsx = async (filter?: Partial<SupplierTypes.Su
             }
             contactCodes = await readAllSupplierBukkuContactCodes();
         }
-    } catch (err: any) {
-        console.error(err);
+    } catch (err) {
+        
         throw err;
     }
 
@@ -317,8 +330,8 @@ export const exportBukkuSuppliersXlsx = async (filter?: Partial<SupplierTypes.Su
     return workbook;
 };
 
-export const exportBukkuPurchasesBillXlsx = async (filter?: Partial<PurchasesTypes.PurchasesTransactions>) => {
-    const purchases = await purchasesRepo.readPurchasesTransactions(filter);
+export const exportBukkuPurchasesBillXlsx = async (filter?: Partial<PurchasesTypes.PurchasesTransactions>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
+    const purchases = await purchasesRepo.readPurchasesTransactions(filter, sqlClauseOptions, search);
     let contactCodes = await readAllSupplierBukkuContactCodes();
     const supplierIDs = new Set(purchases.map(purchase => purchase.supplier_id));
 
@@ -333,8 +346,7 @@ export const exportBukkuPurchasesBillXlsx = async (filter?: Partial<PurchasesTyp
             }
             contactCodes = await readAllSupplierBukkuContactCodes();
         }
-    } catch (err: any) {
-        console.error(err);
+    } catch (err) {
         throw err;
     }
 
@@ -415,8 +427,8 @@ export const exportBuyersXlsx = async (filter?: Partial<BuyerTypes.Buyer>, sqlCl
             }
             contactCodes = await readAllBuyerBukkuContactCodes();
         }
-    } catch (err: any) {
-        console.error(err);
+    } catch (err) {
+        
         throw err;
     }
 
@@ -450,8 +462,8 @@ export const exportBuyersXlsx = async (filter?: Partial<BuyerTypes.Buyer>, sqlCl
     return workbook;
 };
 
-export const exportBukkuSalesBillXlsx = async (filter?: Partial<SalesTypes.SalesTransactions>) => {
-    const sales = await salesRepo.readSalesTransactions(filter);
+export const exportBukkuSalesBillXlsx = async (filter?: Partial<SalesTypes.SalesTransactions>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
+    const sales = await salesRepo.readSalesTransactions(filter, sqlClauseOptions, search);
     let contactCodes = await readAllBuyerBukkuContactCodes();
     const buyerIDs = new Set(sales.map(sales => sales.buyer_id));
 
@@ -466,8 +478,8 @@ export const exportBukkuSalesBillXlsx = async (filter?: Partial<SalesTypes.Sales
             }
             contactCodes = await readAllBuyerBukkuContactCodes();
         }
-    } catch (err: any) {
-        console.error(err);
+    } catch (err) {
+        
         throw err;
     }
 
