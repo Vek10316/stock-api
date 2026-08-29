@@ -17,7 +17,7 @@ export const readPurchasesTransactions = async (filter?: Partial<PurchasesTransa
             },
         };
     };
-    if (sqlClauseOptions?.dateRange !== undefined) { 
+    if (sqlClauseOptions?.dateRange !== undefined) {
         sqlClauseOptions = {
             ...sqlClauseOptions,
             dateRange: {
@@ -339,7 +339,7 @@ export const readPurchasesTotalByDateRange = async (dateRange: DateRange): Promi
     const query = `SELECT SUM(transact_total_amount) as transact_total_amount FROM purchases_transactions WHERE transact_date BETWEEN '${start}' AND '${end}'`
     const result = (await pool.query(query)).recordset[0].transact_total_amount as Pick<PurchasesTransactions, "transact_total_amount">;
     return result;
-}
+};
 
 export const readPurchasedItemsByDateRange = async (dateRange: DateRange): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
     const pool = await getPool();
@@ -353,4 +353,69 @@ export const readPurchasedItemsByDateRange = async (dateRange: DateRange): Promi
         stock_id: res.stock_id,
         item_quantity: res.item_quantity
     }));
-}
+};
+
+export const readPurchasesCount = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string) => {
+    const pool = await getPool();
+    if (search !== undefined && search.trim() !== "") {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            search: {
+                columns: ["P.supplier_id", "P.transact_id", "S.supplier_name", "V.plate_no", "D.stock_id"],
+                searchQuery: search
+            }
+        }
+    }
+    if (sqlClauseOptions?.dateRange !== undefined) {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            dateRange: {
+                ...sqlClauseOptions.dateRange,
+                column: "P.transact_date",
+            }
+        }
+    };
+    let query = "SELECT COUNT(*) AS purchases_count FROM purchases_transactions AS P" +
+        " LEFT JOIN (" +
+        " SELECT transact_id, SUM(item_quantity) AS total_quantity FROM purchases_transactions_details GROUP BY transact_id" +
+        " ) AS D ON P.transact_id = D.transact_id" +
+        " LEFT JOIN master_supplier AS S ON P.supplier_id = S.supplier_id" +
+        " LEFT JOIN (" +
+        " SELECT supplier_id, STRING_AGG(plate_no, ', ') AS plate_no FROM supplier_vehicles GROUP BY supplier_id" +
+        " ) AS V ON P.supplier_id = V.supplier_id";
+    query += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
+    const { purchases_count } = (await pool.query(query)).recordset[0];
+    return purchases_count;
+};
+
+export const readPurchasesDetailsCount = async (filter?: Partial<TransactionDetails>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string) => {
+    const pool = await getPool();
+    if (search !== undefined && search.trim() !== "") {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            search: {
+                columns: ["P.supplier_id", "P.transact_id", "S.supplier_name", "V.plate_no", "D.stock_id"],
+                searchQuery: search
+            }
+        }
+    }
+    if (sqlClauseOptions?.dateRange !== undefined) {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            dateRange: {
+                ...sqlClauseOptions.dateRange,
+                column: "P.transact_date",
+            }
+        }
+    };
+    let query = `SELECT COUNT(*) AS purchases_details_count FROM purchases_transactions_details AS D` +
+        ` LEFT JOIN purchases_transactions AS P ON D.transact_id = P.transact_id` +
+        ` LEFT JOIN master_supplier AS S ON P.supplier_id = S.supplier_id` +
+        ` LEFT JOIN (` +
+        ` SELECT supplier_id, STRING_AGG(plate_no, ', ') AS plate_no FROM supplier_vehicles GROUP BY supplier_id` +
+        ` ) AS V ON P.supplier_id = V.supplier_id`;
+
+    query += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
+    const { purchases_details_count } = (await pool.query(query)).recordset[0];
+    return purchases_details_count;
+};

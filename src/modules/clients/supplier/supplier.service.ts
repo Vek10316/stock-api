@@ -76,7 +76,12 @@ export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions
     return result;
 };
 
+export const readSupplierCount = async (filter?: Partial<Supplier>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
+    const result = await repo.readSupplierCount(filter, sqlClauseOptions, search);
+    return result;
+};
+
 export const updateSupplierLastTransactDate = async (supplier_id: string, transact_date: Date): Promise<boolean> => {
     const result = await repo.updateSupplierLastTransactDate(supplier_id, transact_date);
     return result;
-}
+};

@@ -239,6 +239,38 @@ export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions
     return response;
 };
 
+export const readSupplierCount = async (filter?: Partial<Supplier>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string) => {
+    const pool = await getPool();
+    if (search !== undefined && search?.trim() !== "") {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            search: {
+                columns: ["M.supplier_id", "M.supplier_name", "M.supplier_phone", "V.plate_no"],
+                searchQuery: search
+            }
+        };
+    };
+    if (sqlClauseOptions?.dateRange !== undefined) {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            dateRange: {
+                ...sqlClauseOptions.dateRange,
+                column: "M.last_transact_date"
+            }
+        }
+    };
+
+    let query = `SELECT COUNT(*) AS total_suppliers` +
+        ` FROM master_supplier AS M` +
+        ` LEFT JOIN (` +
+        ` SELECT supplier_id, STRING_AGG(plate_no, ', ') AS plate_no` +
+        ` FROM supplier_vehicles GROUP BY supplier_id)` +
+        ` AS V ON M.supplier_id = V.supplier_id`;
+    query += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
+    const { total_suppliers } = (await pool.query(query)).recordset[0];
+    return total_suppliers;
+}
+
 export const updateSupplierLastTransactDate = async (supplier_id: string, transact_date: Date): Promise<boolean> => {
     const pool = await getPool();
     const transaction = new sql.Transaction(pool);
@@ -264,4 +296,4 @@ export const updateSupplierLastTransactDate = async (supplier_id: string, transa
         }
         throw err;
     }
-}
+};

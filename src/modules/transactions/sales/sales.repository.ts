@@ -17,7 +17,7 @@ export const readSalesTransactions = async (filter?: Partial<SalesTransactions>,
             },
         };
     };
-    if (sqlClauseOptions?.dateRange !== undefined) { 
+    if (sqlClauseOptions?.dateRange !== undefined) {
         sqlClauseOptions = {
             ...sqlClauseOptions,
             dateRange: {
@@ -339,7 +339,7 @@ export const readSalesTotalByDateRange = async (dateRange: DateRange): Promise<P
     const query = `SELECT SUM(transact_total_amount) as transact_total_amount FROM sales_transactions WHERE transact_date BETWEEN '${start}' AND '${end}'`
     const result = (await pool.query(query)).recordset[0].transact_total_amount as Pick<SalesTransactions, "transact_total_amount">;
     return result;
-}
+};
 
 export const readSoldItemsByDateRange = async (dateRange: DateRange): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
     const pool = await getPool();
@@ -353,4 +353,69 @@ export const readSoldItemsByDateRange = async (dateRange: DateRange): Promise<Pi
         stock_id: res.stock_id,
         item_quantity: res.item_quantity
     }));
-}
+};
+
+export const readSalesCount = async (filter?: Partial<SalesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string) => {
+    const pool = await getPool();
+    if (search !== undefined && search.trim() !== "") {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            search: {
+                columns: ["P.buyer_id", "P.transact_id", "S.buyer_name", "V.plate_no", "D.stock_id"],
+                searchQuery: search
+            }
+        }
+    }
+    if (sqlClauseOptions?.dateRange !== undefined) {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            dateRange: {
+                ...sqlClauseOptions.dateRange,
+                column: "P.transact_date",
+            }
+        }
+    };
+    let query = "SELECT COUNT(*) AS sales_count FROM sales_transactions AS P" +
+        " LEFT JOIN (" +
+        " SELECT transact_id, SUM(item_quantity) AS total_quantity FROM sales_transactions_details GROUP BY transact_id" +
+        " ) AS D ON P.transact_id = D.transact_id" +
+        " LEFT JOIN master_buyer AS S ON P.buyer_id = S.buyer_id" +
+        " LEFT JOIN (" +
+        " SELECT buyer_id, STRING_AGG(plate_no, ', ') AS plate_no FROM buyer_vehicles GROUP BY buyer_id" +
+        " ) AS V ON P.buyer_id = V.buyer_id";
+    query += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
+    const { sales_count } = (await pool.query(query)).recordset[0];
+    return sales_count;
+};
+
+export const readSalesDetailsCount = async (filter?: Partial<TransactionDetails>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string) => {
+    const pool = await getPool();
+    if (search !== undefined && search.trim() !== "") {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            search: {
+                columns: ["P.buyer_id", "P.transact_id", "S.buyer_name", "V.plate_no", "D.stock_id"],
+                searchQuery: search
+            }
+        }
+    }
+    if (sqlClauseOptions?.dateRange !== undefined) {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            dateRange: {
+                ...sqlClauseOptions.dateRange,
+                column: "P.transact_date",
+            }
+        }
+    };
+    let query = `SELECT COUNT(*) AS sales_details_count FROM sales_transactions_details AS D` +
+        ` LEFT JOIN sales_transactions AS P ON D.transact_id = P.transact_id` +
+        ` LEFT JOIN master_buyer AS S ON P.buyer_id = S.buyer_id` +
+        ` LEFT JOIN (` +
+        ` SELECT buyer_id, STRING_AGG(plate_no, ', ') AS plate_no FROM buyer_vehicles GROUP BY buyer_id` +
+        ` ) AS V ON P.buyer_id = V.buyer_id`;
+
+    query += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
+    const { sales_details_count } = (await pool.query(query)).recordset[0];
+    return sales_details_count;
+};

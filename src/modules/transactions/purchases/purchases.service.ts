@@ -160,3 +160,13 @@ export const readPurchasesTotalByDateRange = async (dateRange: DateRange): Promi
 export const readPurchasedItemsByDateRange = async (dateRange: DateRange): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
     return await repo.readPurchasedItemsByDateRange(dateRange);
 };
+
+export const readPurchasesCount = async (filter?: Partial<PurchasesTransactions>, sqlClauseOptions?:gh.SqlClauseOptions, search?: string) => {
+    const result = await repo.readPurchasesCount(filter, sqlClauseOptions, search);
+    return result;
+};
+
+export const readPurchasesDetailsCount = async (filter?: Partial<TransactionDetails>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string) => {
+    const result = await repo.readPurchasesDetailsCount(filter, sqlClauseOptions, search);
+    return result;
+};

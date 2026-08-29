@@ -3,7 +3,7 @@ import * as controller from './supplier.controller';
 
 const router = Router();
 
-router.get('/list', controller.listSuppliers)
+router.get('/list', controller.listSuppliers);
 
 router.post('/vehicles/', controller.insertSupplierVehicle);
 router.get('/vehicles/:id', controller.getVehiclesBySupplierID);
@@ -12,6 +12,7 @@ router.get('/vehicles/', controller.getSupplierVehicles);
 router.patch('/vehicles/:id', controller.updateSupplierVehicle);
 router.delete('/vehicles/:id', controller.deleteSupplierVehicle);
 router.post('/', controller.createSupplier);
+router.get('/count/', controller.readSupplierCount);
 router.get('/:id', controller.getSupplierByID);
 router.get('/', controller.getSuppliers);
 router.patch('/:id', controller.updateSupplier);

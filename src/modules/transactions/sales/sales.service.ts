@@ -160,3 +160,13 @@ export const readSalesTotalByDateRange = async (dateRange: DateRange): Promise<P
 export const readSoldItemsByDateRange = async (dateRange: DateRange): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
     return await repo.readSoldItemsByDateRange(dateRange);
 };
+
+export const readSalesCount = async (filter?: Partial<SalesTransactions>, sqlClauseOptions?:gh.SqlClauseOptions, search?: string) => {
+    const result = await repo.readSalesCount(filter, sqlClauseOptions, search);
+    return result;
+};
+
+export const readSalesDetailsCount = async (filter?: Partial<TransactionDetails>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string) => {
+    const result = await repo.readSalesDetailsCount(filter, sqlClauseOptions, search);
+    return result;
+};

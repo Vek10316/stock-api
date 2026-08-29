@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as service from './purchases.service';
 import { PurchasesTransactions } from './purchases.types';
 import { TransactionDetails } from '../shared.transactions.types';
+import { SqlClauseOptions } from '../../../utils/globalHelpers';
 
 export const readPurchasesTransactions = async (req: Request, res: Response) => {
     try {
@@ -102,5 +103,47 @@ export const readPurchasesDetails = async (req: Request, res: Response) => {
         res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
+    }
+};
+
+export const readPurchasesCount = async (req: Request, res: Response) => {
+    try {
+        const query = req.query;
+        const search = query.search !== undefined ? query.search as string : undefined;
+        const startDate = query.startDate !== undefined ? new Date(query.startDate as string + " 00:00:00") : undefined;
+        const endDate = query.endDate !== undefined ? new Date(query.endDate as string + " 23:59:59") : undefined;
+        const sqlClauseOptions: SqlClauseOptions = {
+            dateRange: startDate !== undefined && endDate !== undefined ? {
+                column: "transact_date",
+                startDate,
+                endDate
+            } : undefined
+        };
+        const result = await service.readPurchasesCount({}, sqlClauseOptions, search)
+        res.json(result);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+        throw err;
+    }
+};
+
+export const readPurchasesDetailsCount = async (req: Request, res: Response) => {
+    try {
+        const query = req.query;
+        const search = query.search !== undefined ? query.search as string : undefined;
+        const startDate = query.startDate !== undefined ? new Date(query.startDate as string + " 00:00:00") : undefined;
+        const endDate = query.endDate !== undefined ? new Date(query.endDate as string + " 23:59:59") : undefined;
+        const sqlClauseOptions: SqlClauseOptions = {
+            dateRange: startDate !== undefined && endDate !== undefined ? {
+                column: "transact_date",
+                startDate,
+                endDate
+            } : undefined
+        };
+        const result = await service.readPurchasesDetailsCount({}, sqlClauseOptions, search);
+        res.json(result);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+        throw err;
     }
 };
