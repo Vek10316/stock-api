@@ -24,7 +24,6 @@ app.use('/api/buyers/', buyerRoutes);
 app.use('/api/purchases/', purchasesRoutes);
 app.use('/api/sales/', salesRoutes);
 app.use('/api/transaction-settings/', transactionSettingsRoutes);
-app.use('/api/test/', apiCallTestRoutes);
 app.use('/api/export/', exportDataRoutes);
 app.use('/api/reports/', reportRoutes);
 app.use('/api/expenses-record/', expensesRecordRoutes);
