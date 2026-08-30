@@ -66,9 +66,16 @@ export const previewBukkuSuppliers = async (filter?: Partial<SupplierTypes.Suppl
         is_customer: true,
     }));
 
+    sqlClauseOptions = {
+        ...sqlClauseOptions,
+        maxRows: undefined
+    };
+    const supplierCount = await supplierRepo.readSupplierCount(filter, sqlClauseOptions, search) as number;
+
     return {
         headers: columnHeaders,
-        data: previewData
+        data: previewData,
+        totalCount: supplierCount
     };
 }
 
@@ -143,11 +150,19 @@ export const previewBukkuPurchasesBill = async (filter?: Partial<PurchasesTypes.
         uom: stockMap.get(purchase.details.stock_id)?.stock_uom ?? undefined,
         quantity: purchase.details.item_quantity,
         unit_price: purchase.details.item_price,
+        location: purchase.header.transact_address,
     }));
+
+    sqlClauseOptions = {
+        ...sqlClauseOptions,
+        maxRows: undefined
+    };
+    const purchasesCount = await purchasesRepo.readPurchasesDetailsCount(filter, sqlClauseOptions, search);
 
     return {
         headers: columnHeaders,
         data: previewData,
+        totalCount: purchasesCount
     };
 };
 
@@ -171,7 +186,6 @@ export const previewBukkuBuyers = async (filter?: Partial<BuyerTypes.Buyer>, sql
             contactCodes = await readAllBuyerBukkuContactCodes();
         }
     } catch (err) {
-        
         throw err;
     }
 
@@ -193,9 +207,16 @@ export const previewBukkuBuyers = async (filter?: Partial<BuyerTypes.Buyer>, sql
         is_customer: true,
     }));
 
+    sqlClauseOptions = {
+        ...sqlClauseOptions,
+        maxRows: undefined
+    };
+    const buyerCount = await buyerRepo.readBuyerCount(filter, sqlClauseOptions, search) as number;
+
     return {
         headers: columnHeaders,
-        data: previewData
+        data: previewData,
+        totalCount: buyerCount
     };
 }
 
@@ -220,7 +241,6 @@ export const previewBukkuSalesBill = async (filter?: Partial<SalesTypes.SalesTra
             contactCodes = await readAllBuyerBukkuContactCodes();
         }
     } catch (err) {
-        
         throw err;
     }
 
@@ -272,11 +292,19 @@ export const previewBukkuSalesBill = async (filter?: Partial<SalesTypes.SalesTra
         uom: stockMap.get(sale.details.stock_id)?.stock_uom ?? undefined,
         quantity: sale.details.item_quantity,
         unit_price: sale.details.item_price,
+        location: sale.header.transact_address
     }));
+
+    sqlClauseOptions = {
+        ...sqlClauseOptions,
+        maxRows: undefined
+    };
+    const salesCount = await salesRepo.readSalesCount(filter, sqlClauseOptions, search) as number;
 
     return {
         headers: columnHeaders,
         data: previewData,
+        totalCount: salesCount
     };
 };
 
@@ -296,7 +324,6 @@ export const exportBukkuSuppliersXlsx = async (filter?: Partial<SupplierTypes.Su
             contactCodes = await readAllSupplierBukkuContactCodes();
         }
     } catch (err) {
-        
         throw err;
     }
 
@@ -428,7 +455,7 @@ export const exportBuyersXlsx = async (filter?: Partial<BuyerTypes.Buyer>, sqlCl
             contactCodes = await readAllBuyerBukkuContactCodes();
         }
     } catch (err) {
-        
+
         throw err;
     }
 
@@ -479,7 +506,7 @@ export const exportBukkuSalesBillXlsx = async (filter?: Partial<SalesTypes.Sales
             contactCodes = await readAllBuyerBukkuContactCodes();
         }
     } catch (err) {
-        
+
         throw err;
     }
 

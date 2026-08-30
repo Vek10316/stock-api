@@ -190,7 +190,7 @@ export const listBuyers = async (filter?: Partial<Buyer>, sqlClauseOptions?: gh.
             ...sqlClauseOptions,
             dateRange: {
                 ...sqlClauseOptions.dateRange,
-                column: "M.last_transact_date"
+                column: "last_transact_date"
             }
         }
     };

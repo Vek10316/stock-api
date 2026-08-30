@@ -33,7 +33,6 @@ export const readSalesTransactions = async (filter?: Partial<SalesTransactions>,
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
-        console.error(`Unhandled exception: `, err);
         throw err;
     }
 };
@@ -96,7 +95,6 @@ export const listSaleTransactions = async (filter?: Partial<SalesTransactions>, 
 
         return response;
     } catch (err) {
-        console.error(`Unhandled exception: `, err);
         throw err;
     }
 };
@@ -118,7 +116,6 @@ export const insertSalesTransaction = async (data: SalesTransactions, details: O
         await transaction.commit();
         return data;
     } catch (err) {
-        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {
@@ -147,7 +144,6 @@ export const updateSalesTransaction = async (transact_id: string, data: Partial<
         await transaction.commit();
         return (await readSalesTransactions({ transact_id }))[0];
     } catch (err) {
-        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {
@@ -170,7 +166,6 @@ export const deleteSalesTransaction = async (id: string): Promise<boolean> => {
         await transaction.commit();
         return result.rowsAffected.length > 0;
     } catch (err) {
-        console.error(`Unhandled exception: `, err);
         try {
             await transaction.rollback();
         } catch (rollbackErr) {
@@ -217,7 +212,6 @@ export const getSalesDetailIDs = async (transact_id: string): Promise<string[]> 
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
-        console.error(`Unhandled exception: `, err);
         throw err;
     }
 };
@@ -316,7 +310,7 @@ export const readFullSaleDetails = async (filter?: Partial<SalesTransactions>, s
     return Array.from(response.values());
 }
 
-export const getSoldTotalQuantity = async (transact_id: string): Promise<number> => {
+export const getTotalQuantity = async (transact_id: string): Promise<number> => {
     const pool = await getPool();
     const query = `SELECT SUM(item_quantity) as total_quantity FROM sales_transactions_details WHERE transact_id = '${transact_id}'`;
     const result: { total_quantity: number } = (await pool.query(query)).recordset[0];
@@ -341,7 +335,7 @@ export const readSalesTotalByDateRange = async (dateRange: DateRange): Promise<P
     return result;
 };
 
-export const readSoldItemsByDateRange = async (dateRange: DateRange): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
+export const readItemsByDateRange = async (dateRange: DateRange): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
     const pool = await getPool();
     const start = dateRange.startDate.toLocaleDateString('en-CA');
     const end = dateRange.endDate.toLocaleDateString('en-CA');

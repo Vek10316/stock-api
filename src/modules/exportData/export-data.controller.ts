@@ -33,7 +33,8 @@ export const previewBukkuSuppliers = async (req: Request, res: Response) => {
         )
         res.json(preview);
     } catch (err) {
-        return res.status(500).json({ message: "Preview failed!" });
+        res.status(500).json({ message: "Preview failed!" });
+        throw err;
     }
 };
 

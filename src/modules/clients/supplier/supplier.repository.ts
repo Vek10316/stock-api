@@ -190,7 +190,7 @@ export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions
             ...sqlClauseOptions,
             dateRange: {
                 ...sqlClauseOptions.dateRange,
-                column: "M.last_transact_date"
+                column: "last_transact_date"
             }
         }
     };
