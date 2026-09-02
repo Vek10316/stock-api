@@ -310,7 +310,7 @@ export const readFullSaleDetails = async (filter?: Partial<SalesTransactions>, s
     return Array.from(response.values());
 }
 
-export const getTotalQuantity = async (transact_id: string): Promise<number> => {
+export const getSoldTotalQuantity = async (transact_id: string): Promise<number> => {
     const pool = await getPool();
     const query = `SELECT SUM(item_quantity) as total_quantity FROM sales_transactions_details WHERE transact_id = '${transact_id}'`;
     const result: { total_quantity: number } = (await pool.query(query)).recordset[0];
@@ -335,7 +335,7 @@ export const readSalesTotalByDateRange = async (dateRange: DateRange): Promise<P
     return result;
 };
 
-export const readItemsByDateRange = async (dateRange: DateRange): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
+export const readSoldItemsByDateRange = async (dateRange: DateRange): Promise<Pick<TransactionDetails, "stock_id" | "item_quantity">[]> => {
     const pool = await getPool();
     const start = dateRange.startDate.toLocaleDateString('en-CA');
     const end = dateRange.endDate.toLocaleDateString('en-CA');

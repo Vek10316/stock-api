@@ -68,7 +68,11 @@ export const previewBukkuPurchasesBill = async (req: Request, res: Response) => 
             search);
         res.json(preview);
     } catch (err) {
-        return res.status(500).json({ message: "Preview failed!" });
+        console.error("Export failed:", err);
+
+        if (!res.headersSent) {
+            res.status(500).json({ message: "Export failed" });
+        }
     }
 };
 
@@ -102,7 +106,11 @@ export const previewBukkuBuyers = async (req: Request, res: Response) => {
             search);
         res.json(preview);
     } catch (err) {
-        return res.status(500).json({ message: "Preview failed!" });
+        console.error("Export failed:", err);
+
+        if (!res.headersSent) {
+            res.status(500).json({ message: "Export failed" });
+        }
     }
 };
 
@@ -134,7 +142,11 @@ export const previewBukkuSalesBill = async (req: Request, res: Response) => {
         const preview = await bukkuService.previewBukkuSalesBill({}, sqlClauseOptions, search);
         res.json(preview);
     } catch (err) {
-        return res.status(500).json({ message: "Preview failed!" });
+        console.error("Export failed:", err);
+
+        if (!res.headersSent) {
+            res.status(500).json({ message: "Export failed" });
+        }
     }
 };
 
@@ -170,6 +182,7 @@ export const exportBukkuSuppliersXlsx = async (req: Request, res: Response) => {
             month: "2-digit",
             day: "2-digit",
         })
+
         res.setHeader(
             "Content-Type",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -182,7 +195,11 @@ export const exportBukkuSuppliersXlsx = async (req: Request, res: Response) => {
         await workbook.xlsx.write(res);
         res.end();
     } catch (err) {
-        return res.status(500).json({ message: "Export failed" });
+        console.error("Export failed:", err);
+
+        if (!res.headersSent) {
+            res.status(500).json({ message: "Export failed" });
+        }
     }
 };
 
@@ -229,7 +246,11 @@ export const exportBukkuPurchasesBillXlsx = async (req: Request, res: Response) 
         await workbook.xlsx.write(res);
         res.end()
     } catch (err) {
-        return res.status(500).json({ message: "Export failed" });
+        console.error("Export failed:", err);
+
+        if (!res.headersSent) {
+            res.status(500).json({ message: "Export failed" });
+        }
     }
 }
 
@@ -282,7 +303,11 @@ export const exportBukkuBuyersXlsx = async (req: Request, res: Response) => {
         await workbook.xlsx.write(res);
         res.end();
     } catch (err) {
-        return res.status(500).json({ message: "Export failed" });
+        console.error("Export failed:", err);
+
+        if (!res.headersSent) {
+            res.status(500).json({ message: "Export failed" });
+        }
     }
 };
 
@@ -329,6 +354,10 @@ export const exportBukkuSalesBillXlsx = async (req: Request, res: Response) => {
         await workbook.xlsx.write(res);
         res.end()
     } catch (err) {
-        return res.status(500).json({ message: "Export failed" });
+        console.error("Export failed:", err);
+
+        if (!res.headersSent) {
+            res.status(500).json({ message: "Export failed" });
+        }
     }
 }
