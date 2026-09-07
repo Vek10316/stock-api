@@ -14,7 +14,7 @@ export const getBuyers = async (req: Request, res: Response) => {
                 pageNumber: pageNo,
             },
             sort: {
-                column: "buyer_id",
+                column: "id",
                 order: "DESC",
             },
         }, search);
@@ -26,8 +26,8 @@ export const getBuyers = async (req: Request, res: Response) => {
 
 export const getBuyerByID = async (req: Request, res: Response) => {
     try {
-        const buyer_id = req.params.id as string;
-        const result = (await service.readBuyers({ buyer_id }))[0];
+        const id = Number.parseInt(req.params.id as string);
+        const result = (await service.readBuyers({ id }))[0];
         res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
@@ -48,11 +48,11 @@ export const createBuyer = async (req: Request, res: Response) => {
 
 export const updateBuyer = async (req: Request, res: Response) => {
     try {
-        const id = req.params.id as string;
+        const id = Number.parseInt(req.params.id as string);
         const body = req.body;
         const buyer = body.buyer;
         const vehicles = body.vehicles;
-        if (!id || id.trimEnd() === "") {
+        if (isNaN(id)) {
             return res.status(400).json({ error: `Invalid ID` });
         }
         const result = await service.updateBuyer(id, buyer, vehicles);
@@ -64,8 +64,8 @@ export const updateBuyer = async (req: Request, res: Response) => {
 
 export const deleteBuyer = async (req: Request, res: Response) => {
     try {
-        const id = req.params.id as string;
-        if (!id || id.trimEnd() === "") {
+        const id = Number.parseInt(req.params.id as string);
+        if (isNaN(id)) {
             return res.status(400).json({ error: `Invalid ID` });
         }
         const deleted = await service.deleteBuyer(id);
@@ -97,8 +97,8 @@ export const getBuyerVehicles = async (req: Request, res: Response) => {
 
 export const getVehiclesByBuyerID = async (req: Request, res: Response) => {
     try {
-        const buyer_id = req.params.id as string;
-        const result = await service.readBuyerVehicles({ buyer_id });
+        const id = Number.parseInt(req.params.id as string);
+        const result = await service.readBuyerVehicles({ buyer_id: id });
         res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });

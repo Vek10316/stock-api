@@ -14,7 +14,7 @@ export const getSuppliers = async (req: Request, res: Response) => {
                 pageNumber: pageNo,
             },
             sort: {
-                column: "supplier_id",
+                column: "id",
                 order: "DESC",
             },
         }, search);
@@ -26,8 +26,8 @@ export const getSuppliers = async (req: Request, res: Response) => {
 
 export const getSupplierByID = async (req: Request, res: Response) => {
     try {
-        const supplier_id = req.params.id as string;
-        const result = (await service.readSuppliers({ supplier_id }))[0];
+        const id = Number.parseInt(req.params.id as string);
+        const result = (await service.readSuppliers({ id }))[0];
         res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });
@@ -48,11 +48,11 @@ export const createSupplier = async (req: Request, res: Response) => {
 
 export const updateSupplier = async (req: Request, res: Response) => {
     try {
-        const id = req.params.id as string;
+        const id = Number.parseInt(req.params.id as string);
         const body = req.body;
         const supplier = body.supplier;
         const vehicles = body.vehicles;
-        if (!id || id.trimEnd() === "") {
+        if (isNaN(id)) {
             return res.status(400).json({ error: `Invalid ID` });
         }
         const result = await service.updateSupplier(id, supplier, vehicles);
@@ -64,8 +64,8 @@ export const updateSupplier = async (req: Request, res: Response) => {
 
 export const deleteSupplier = async (req: Request, res: Response) => {
     try {
-        const id = req.params.id as string;
-        if (!id || id.trimEnd() === "") {
+        const id = Number.parseInt(req.params.id as string);
+        if (isNaN(id)) {
             return res.status(400).json({ error: `Invalid ID` });
         }
         const deleted = await service.deleteSupplier(id);
@@ -97,8 +97,8 @@ export const getSupplierVehicles = async (req: Request, res: Response) => {
 
 export const getVehiclesBySupplierID = async (req: Request, res: Response) => {
     try {
-        const supplier_id = req.params.id as string;
-        const result = await service.readSupplierVehicles({ supplier_id });
+        const id = Number.parseInt(req.params.id as string);
+        const result = await service.readSupplierVehicles({ supplier_id: id });
         res.json(result);
     } catch (err: any) {
         res.status(500).json({ error: err.message });

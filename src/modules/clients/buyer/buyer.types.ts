@@ -1,4 +1,5 @@
 export type Buyer = {
+    id: number;
     buyer_id: string;
     buyer_id_type: "NRIC" | "PASSPORT" | "BRN";
     buyer_name: string;
@@ -11,6 +12,6 @@ export type Buyer = {
 
 export type BuyerVehicles = {
     vehicle_id: number;
-    buyer_id: string;
+    buyer_id: number;
     plate_no: string;
 }

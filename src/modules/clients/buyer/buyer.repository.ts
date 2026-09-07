@@ -6,18 +6,33 @@ import type { ApiPaginatedResponse } from "../../../types/api-response.type";
 
 export const readBuyers = async (data?: Partial<Buyer>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string): Promise<Buyer[]> => {
     const pool = await getPool();
+    if (search !== undefined && search?.trim() !== "") {
+        sqlClauseOptions = {
+            ...sqlClauseOptions,
+            search: {
+                columns: ["id", "buyer_id", "buyer_name", "buyer_phone", "buyer_email"],
+                searchQuery: search.trim()
+            }
+        }
+    }
     try {
         let query = "SELECT * FROM master_buyer";
         query += await gh.buildSqlConditions(data ?? {}, sqlClauseOptions);
         const result = await pool.query(query);
         return result.recordset;
     } catch (err) {
-        console.error(`Unhandled exception: `, err);
         throw err;
     }
 };
 
-export const createBuyer = async (data: Buyer): Promise<Buyer> => {
+export const readBuyerByID = async (id: number): Promise<Buyer> => {
+    const pool = await getPool();
+    const query = `SELECT * FROM master_buyer WHERE id = ${id}`;
+    const result = await pool.query(query);
+    return result.recordset[0];
+};
+
+export const createBuyer = async (data: Omit<Buyer, "id">): Promise<Buyer> => {
     const pool = await getPool();
     const transaction = new sql.Transaction(pool);
     try {
@@ -26,7 +41,8 @@ export const createBuyer = async (data: Buyer): Promise<Buyer> => {
         let query = await gh.buildSqlInsertQuery("master_buyer", data, transaction, request);
         await request.query(query);
         await transaction.commit();
-        return data;
+        const buyer = (await readBuyers(data))[0];
+        return buyer;
     } catch (err) {
         console.error(`Unhandled exception: `, err);
         try {
@@ -38,16 +54,16 @@ export const createBuyer = async (data: Buyer): Promise<Buyer> => {
     }
 };
 
-export const updateBuyer = async (id: string, data: Partial<Buyer>): Promise<Buyer> => {
+export const updateBuyer = async (id: number, data: Partial<Buyer>): Promise<Buyer> => {
     const pool = await getPool();
     const transaction = new sql.Transaction(pool);
     try {
         await transaction.begin();
         const request = new sql.Request(transaction);
-        let query = await gh.buildSqlUpdateQuery("master_buyer", data, { buyer_id: id }, transaction, request)
+        let query = await gh.buildSqlUpdateQuery("master_buyer", data, { id }, transaction, request)
         await request.query(query);
         await transaction.commit();
-        return (await readBuyers({ buyer_id: id }))[0];
+        return (await readBuyers({ id: id }))[0];
     } catch (err) {
         console.error(`Unhandled exception: `, err);
         try {
@@ -59,12 +75,12 @@ export const updateBuyer = async (id: string, data: Partial<Buyer>): Promise<Buy
     }
 };
 
-export const deleteBuyer = async (id: string): Promise<boolean> => {
+export const deleteBuyer = async (id: number): Promise<boolean> => {
     const pool = await getPool();
     const transaction = new sql.Transaction(pool);
     try {
         await transaction.begin();
-        const query = `DELETE FROM master_buyer WHERE buyer_id = '${id}'`;
+        const query = `DELETE FROM master_buyer WHERE id = ${id}`;
         const result = await pool.query(query);
         await transaction.commit();
         return result.rowsAffected.length > 0;
@@ -163,9 +179,9 @@ export const deleteBuyerVehicle = async (vehicle_id: number): Promise<boolean> =
     }
 }
 
-export const readBuyerName = async (buyer_id: string): Promise<string> => {
+export const readBuyerName = async (id: number): Promise<string> => {
     const pool = await getPool();
-    const query = `SELECT buyer_name from master_buyer WHERE buyer_id = '${buyer_id}'`;
+    const query = `SELECT buyer_name from master_buyer WHERE id = ${id}`;
     const result = (await pool.query(query)).recordset[0].buyer_name;
     return result;
 };
@@ -180,7 +196,7 @@ export const listBuyers = async (filter?: Partial<Buyer>, sqlClauseOptions?: gh.
         sqlClauseOptions = {
             ...sqlClauseOptions,
             search: {
-                columns: ["M.buyer_id", "M.buyer_name", "M.buyer_phone", "V.plate_no"],
+                columns: ["M.id", "M.buyer_id", "M.buyer_name", "M.buyer_phone", "V.plate_no"],
                 searchQuery: search
             }
         };
@@ -210,17 +226,17 @@ export const listBuyers = async (filter?: Partial<Buyer>, sqlClauseOptions?: gh.
         ` LEFT JOIN (` +
         ` SELECT buyer_id, STRING_AGG(plate_no, ', ') AS plate_no` +
         ` FROM buyer_vehicles GROUP BY buyer_id)` +
-        ` AS V ON M.buyer_id = V.buyer_id`;
+        ` AS V ON M.id = V.buyer_id`;
     baseQuery += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
     const data = (await pool.query(baseQuery)).recordset.map(d => ({
         ...d,
         plate_no: d.plate_no !== null ? d.plate_no.split(", ") : []
     })) as ListBuyerResult[];
-
+    
     if (sqlClauseOptions.pagination === undefined) return data;
 
     let totalCountQuery = "SELECT COUNT(DISTINCT(M.buyer_id)) AS total_count FROM master_buyer AS M" +
-        " LEFT JOIN buyer_vehicles AS V ON M.buyer_id = V.buyer_id";
+        " LEFT JOIN buyer_vehicles AS V ON M.id = V.buyer_id";
     totalCountQuery += await gh.buildSqlConditions(filter ?? {}, {
         ...sqlClauseOptions,
         sort: undefined,
@@ -245,7 +261,7 @@ export const readBuyerCount = async (filter?: Partial<Buyer>, sqlClauseOptions?:
         sqlClauseOptions = {
             ...sqlClauseOptions,
             search: {
-                columns: ["M.buyer_id", "M.buyer_name", "M.buyer_phone", "V.plate_no"],
+                columns: ["M.id", "M.buyer_id", "M.buyer_name", "M.buyer_phone", "V.plate_no"],
                 searchQuery: search
             }
         };
@@ -265,13 +281,13 @@ export const readBuyerCount = async (filter?: Partial<Buyer>, sqlClauseOptions?:
         ` LEFT JOIN (` +
         ` SELECT buyer_id, STRING_AGG(plate_no, ', ') AS plate_no` +
         ` FROM buyer_vehicles GROUP BY buyer_id)` +
-        ` AS V ON M.buyer_id = V.buyer_id`;
+        ` AS V ON M.id = V.buyer_id`;
     query += await gh.buildSqlConditions(filter ?? {}, sqlClauseOptions);
     const { total_buyers } = (await pool.query(query)).recordset[0];
     return total_buyers;
 }
 
-export const updateBuyerLastTransactDate = async (buyer_id: string, transact_date: Date): Promise<boolean> => {
+export const updateBuyerLastTransactDate = async (id: number, transact_date: Date): Promise<boolean> => {
     const pool = await getPool();
     const transaction = new sql.Transaction(pool);
     try {
@@ -280,7 +296,7 @@ export const updateBuyerLastTransactDate = async (buyer_id: string, transact_dat
         const updateQuery = await gh.buildSqlUpdateQuery(
             "master_buyer",
             { last_transact_date: transact_date },
-            { buyer_id },
+            { id },
             transaction,
             request
         );

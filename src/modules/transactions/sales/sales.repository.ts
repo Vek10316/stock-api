@@ -58,10 +58,10 @@ export const listSaleTransactions = async (filter?: Partial<SalesTransactions>, 
             " LEFT JOIN (" +
             " SELECT transact_id, SUM(item_quantity) AS total_quantity FROM sales_transactions_details GROUP BY transact_id" +
             " ) AS D ON P.transact_id = D.transact_id" +
-            " LEFT JOIN master_buyer AS S ON P.buyer_id = S.buyer_id" +
+            " LEFT JOIN master_buyer AS S ON P.buyer_id = S.id" +
             " LEFT JOIN (" +
             " SELECT buyer_id, STRING_AGG(plate_no, ', ') AS plate_no FROM buyer_vehicles GROUP BY buyer_id" +
-            " ) AS V ON P.buyer_id = V.buyer_id";
+            " ) AS V ON S.id = V.buyer_id";
 
         sqlClauseOptions = {
             ...sqlClauseOptions,
@@ -72,8 +72,8 @@ export const listSaleTransactions = async (filter?: Partial<SalesTransactions>, 
         const data = (await pool.query(baseQuery)).recordset as SalesTransactionListResult[];
 
         let totalCountQuery = "SELECT COUNT(DISTINCT(P.transact_id)) AS total_count FROM sales_transactions AS P" +
-            " LEFT JOIN master_buyer AS S ON P.buyer_id = S.buyer_id" +
-            " LEFT JOIN buyer_vehicles AS V ON P.buyer_id = V.buyer_id";
+            " LEFT JOIN master_buyer AS S ON S.id = P.buyer_id" +
+            " LEFT JOIN buyer_vehicles AS V ON S.id = V.buyer_id";
         totalCountQuery += await gh.buildSqlConditions({}, {
             ...sqlClauseOptions,
             sort: undefined,
@@ -189,7 +189,7 @@ export const insertSalesDetails = async (data: Omit<TransactionDetails, "detail_
     return result.rowsAffected.length > 0;
 };
 
-export const updateSaleDetails = async (detail_id: number, updateData: Partial<TransactionDetails>, transaction: sql.Transaction): Promise<boolean> => {
+export const updatePurchaseDetails = async (detail_id: number, updateData: Partial<TransactionDetails>, transaction: sql.Transaction): Promise<boolean> => {
     const query = await gh.buildSqlUpdateQuery("sales_transactions_details", updateData, { detail_id }, transaction);
     const request = new sql.Request(transaction);
     const result = await request.query(query);
@@ -278,6 +278,7 @@ export const readFullSaleDetails = async (filter?: Partial<SalesTransactions>, s
                 },
                 details: [],
                 buyer: {
+                    id: row.id,
                     buyer_id: row.buyer_id,
                     buyer_id_type: row.buyer_id_type,
                     buyer_name: row.buyer_name,

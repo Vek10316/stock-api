@@ -1,6 +1,6 @@
 export type SalesTransactions = {
     transact_id: string;
-    buyer_id: string;
+    buyer_id: number;
     transact_address: string;
     transact_date: Date;
     transact_total_amount: number;

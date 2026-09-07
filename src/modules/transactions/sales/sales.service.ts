@@ -10,6 +10,7 @@ import { readBuyerName } from '../../clients/buyer/buyer.service';
 import { Buyer, BuyerVehicles } from '../../clients/buyer/buyer.types';
 import type { ApiPaginatedResponse, DateRange } from '../../../types/api-response.type';
 import { updateBuyerLastTransactDate } from '../../clients/buyer/buyer.service';
+import { readBuyerByID } from '../../clients/buyer/buyer.repository';
 
 export const readSalesTransactions = async (filter?: Partial<SalesTransactions>, sqlClauseOptions?: gh.SqlClauseOptions, search?: string | undefined) => {
     const sales = await repo.readSalesTransactions(filter, sqlClauseOptions, search);
@@ -33,7 +34,7 @@ Promise<ApiPaginatedResponse<SalesTransactions[]>> => {
     return result;
 };
 
-export const insertSalesTranscation = async (header: Omit<SalesTransactions, "transact_id">, details: Omit<TransactionDetails, "transact_id" | "detail_id">[]): Promise<{ header: SalesTransactions & { buyer_name: string }, details: TransactionDetails[] }> => {
+export const insertSalesTranscation = async (header: Omit<SalesTransactions, "transact_id">, details: Omit<TransactionDetails, "transact_id" | "detail_id">[]): Promise<{ buyer: Buyer, header: SalesTransactions, details: TransactionDetails[] }> => {
     const generatedHeader = await generateNewTransactionHeaders();
     const payload: SalesTransactions = {
         transact_id: generatedHeader.transact_id,
@@ -47,14 +48,13 @@ export const insertSalesTranscation = async (header: Omit<SalesTransactions, "tr
     const payloadDetails: Omit<TransactionDetails, "detail_id">[] = details.map(d => ({
         transact_id: payload.transact_id,
         ...d,
-    }))
-    // Move current quantity calculation & updateStockQuantity here
+    }));
 
     const result = await repo.insertSalesTransaction(payload, payloadDetails);
     await updateLatestTransactionID("PURCHASES", result.transact_id);
     let transact = await repo.readSalesTransactions({ transact_id: result.transact_id });
     const transactDetails = await repo.readSalesDetails(result.transact_id);
-    const buyerName = await readBuyerName(result.buyer_id);
+    const buyer = await readBuyerByID(result.buyer_id);
     for (const d of payloadDetails) {
         const newStockIn: StockTypes.StockMovement = {
             direction: "IN",
@@ -68,10 +68,10 @@ export const insertSalesTranscation = async (header: Omit<SalesTransactions, "tr
 
     await updateBuyerLastTransactDate(header.buyer_id, header.transact_date);
 
-    let response: { header: SalesTransactions & { buyer_name: string }, details: TransactionDetails[] } = {
+    let response: { buyer: Buyer, header: SalesTransactions, details: TransactionDetails[] } = {
+        buyer: buyer,
         header: {
             ...transact[0],
-            buyer_name: buyerName || "Unknown Buyer"
         },
         details: transactDetails
     };
@@ -81,9 +81,7 @@ export const insertSalesTranscation = async (header: Omit<SalesTransactions, "tr
 
 export const updateSalesTransaction = async (transact_id: string, header: Partial<Omit<SalesTransactions, "transact_id">>, details: Omit<TransactionDetails, "detail_id">[]): Promise<{ header: SalesTransactions, details: TransactionDetails[] }> => {
     await repo.updateSalesTransaction(transact_id, header, details);
-    // Move current quantity calculation & updateStockQuantity here
-
-    // Reinsert stock movements for this transaction
+    
     await deleteStockMovementByTransactID(transact_id, "IN");
 
     for (const d of details) {
@@ -116,7 +114,7 @@ export const deleteSalesTransaction = async (id: string) => {
 }
 
 export const generateNewTransactionHeaders = async (): Promise<{ transact_id: string, transact_address: string, transact_date: Date }> => {
-    const nextTransactID = await generateNextTransactionID("PURCHASES");
+    const nextTransactID = await generateNextTransactionID("SALES");
     const header = {
         transact_id: nextTransactID,
         transact_address: "22, Jalan Seroja 42, Taman Johor Jaya, 81100 Johor Bahru, Johor",
@@ -135,15 +133,13 @@ export const readFullSaleDetails = async (filter?: Partial<SalesTransactions>, s
     return result;
 }
 
-export const readSalesDetails = async (transact_id: string): Promise<{ header: SalesTransactions & { buyer_name: string }, details: TransactionDetails[] }> => {
+export const readSalesDetails = async (transact_id: string): Promise<{ buyer: Buyer, header: SalesTransactions, details: TransactionDetails[] }> => {
     const header = (await repo.readSalesTransactions({ transact_id }))[0];
-    const buyer_name = await readBuyerName(header.buyer_id);
+    const buyer = await readBuyerByID(header.buyer_id);
     const details = await repo.readSalesDetails(transact_id);
     const response = {
-        header: {
-            ...header,
-            buyer_name
-        },
+        buyer,
+        header,
         details
     };
     return response;

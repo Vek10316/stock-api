@@ -5,29 +5,31 @@ import { ApiPaginatedResponse } from "../../../types/api-response.type";
 
 export const readSuppliers = async (data?: Partial<Supplier>, sqlClauseOptions?: SqlClauseOptions, search?: string): Promise<Supplier[]> => {
     let supplier = await repo.readSuppliers(data, sqlClauseOptions, search);
-    if (!data || data === undefined) {
-        supplier = supplier.slice(0, 50);
-    }
     return supplier;
 }
 
-export const createSupplier = async (supplier: Supplier, vehicles: Omit<SupplierVehicles, "vehicle_id">[]) => {
+export const createSupplier = async (supplier: Omit<Supplier, "id">, vehicles: Pick<SupplierVehicles, "plate_no">[]) => {
     try {
-        await repo.createSupplier(supplier);
-        vehicles = vehicles.filter(v => v.plate_no.trim() !== "");
-        vehicles.forEach((v) => {
-            repo.insertSupplierVehicle(v);
-        })
-        let result = await repo.listSuppliers({ supplier_id: supplier.supplier_id });
-        return result;
+        const created = await repo.createSupplier(supplier);
+        if (vehicles !== undefined && vehicles.length > 0) {
+            vehicles = vehicles.filter(v => v.plate_no.trim() !== "");
+            vehicles.map((v) => {
+                repo.insertSupplierVehicle({
+                    ...v,
+                    supplier_id: created.id
+                })
+            })
+        };
+        let result = await repo.listSuppliers({ id: created.id }) as repo.ListSupplierResult[];
+        return result[0];
     } catch (err: any) {
-        console.error("Failed to insert supplier: ", err);
+        throw err;
     }
 };
 
-export const updateSupplier = async (supplier_id: string, supplier: Partial<Supplier>, vehicles: Omit<SupplierVehicles, "vehicle_id">[]): Promise<{ supplier: Supplier, vehicles: SupplierVehicles[] }> => {
-    const supplierRes = await repo.updateSupplier(supplier_id, supplier);
-    const vehicleIDs = (await repo.readSupplierVehicles({ supplier_id })).map(s => s.vehicle_id);
+export const updateSupplier = async (id: number, supplier: Partial<Supplier>, vehicles: Omit<SupplierVehicles, "vehicle_id">[]): Promise<{ supplier: Supplier, vehicles: SupplierVehicles[] }> => {
+    const supplierRes = await repo.updateSupplier(id, supplier);
+    const vehicleIDs = (await repo.readSupplierVehicles({ supplier_id: id })).map(s => s.vehicle_id);
     vehicleIDs.forEach(async v => {
         await repo.deleteSupplierVehicle(v)
     });
@@ -36,7 +38,7 @@ export const updateSupplier = async (supplier_id: string, supplier: Partial<Supp
         await repo.insertSupplierVehicle(v);
     });
 
-    const vehiclesRes = await repo.readSupplierVehicles({ supplier_id });
+    const vehiclesRes = await repo.readSupplierVehicles({ supplier_id: id });
 
     const response = {
         supplier: supplierRes,
@@ -46,15 +48,15 @@ export const updateSupplier = async (supplier_id: string, supplier: Partial<Supp
     return response;
 };
 
-export const deleteSupplier = (supplier_id: string) => {
-    return repo.deleteSupplier(supplier_id);
+export const deleteSupplier = (id: number) => {
+    return repo.deleteSupplier(id);
 };
 
 export const readSupplierVehicles = (filter?: Partial<SupplierVehicles>, sqlClauseOptions?: SqlClauseOptions, search?: string) => {
     return repo.readSupplierVehicles(filter, sqlClauseOptions, search);
 };
 
-export const insertSupplierVehicle = (data: SupplierVehicles) => {
+export const insertSupplierVehicle = (data: Omit<SupplierVehicles, "vehicle_id">) => {
     return repo.insertSupplierVehicle(data);
 };
 
@@ -66,8 +68,8 @@ export const deleteSupplierVehicle = (vehicle_id: number) => {
     return repo.deleteSupplierVehicle(vehicle_id);
 };
 
-export const readSupplierName = (supplier_id: string): Promise<string> => {
-    return repo.readSupplierName(supplier_id);
+export const readSupplierName = (id: number): Promise<string> => {
+    return repo.readSupplierName(id);
 };
 
 export const listSuppliers = async (filter?: Partial<Supplier>, sqlClauseOptions?: SqlClauseOptions, search?: string)
@@ -81,7 +83,7 @@ export const readSupplierCount = async (filter?: Partial<Supplier>, sqlClauseOpt
     return result;
 };
 
-export const updateSupplierLastTransactDate = async (supplier_id: string, transact_date: Date): Promise<boolean> => {
-    const result = await repo.updateSupplierLastTransactDate(supplier_id, transact_date);
+export const updateSupplierLastTransactDate = async (id: number, transact_date: Date): Promise<boolean> => {
+    const result = await repo.updateSupplierLastTransactDate(id, transact_date);
     return result;
 };

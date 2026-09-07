@@ -5,11 +5,11 @@ export type BukkuContactsSettings = {
 };
 
 export type BukkuBuyers = {
-    buyer_id: string;
+    buyer_id: number;
     contact_code: string;
 };
 
 export type BukkuSuppliers = {
-    supplier_id: string;
+    supplier_id: number;
     contact_code: string;
 };

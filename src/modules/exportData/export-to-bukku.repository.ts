@@ -53,14 +53,14 @@ export const readAllBuyerBukkuContactCodes = async (): Promise<BukkuBuyers[]> =>
     return result.recordset;
 };
 
-export const readBuyerBukkuContactCode = async (buyer_id: string): Promise<BukkuBuyers> => {
+export const readBuyerBukkuContactCode = async (buyer_id: number): Promise<BukkuBuyers> => {
     const pool = await getPool();
     const query = `SELECT * FROM bukku_buyers WHERE buyer_id = '${buyer_id}'`;
     const result = await pool.query(query);
     return result.recordset[0];
 };
 
-export const insertBuyerContactCode = async (buyer_id: string, contact_code: string): Promise<BukkuBuyers> => {
+export const insertBuyerContactCode = async (buyer_id: number, contact_code: string): Promise<BukkuBuyers> => {
     const pool = await getPool();
     const transaction = new sql.Transaction(pool);
     try {
@@ -88,14 +88,14 @@ export const readAllSupplierBukkuContactCodes = async (): Promise<BukkuSuppliers
     return result.recordset;
 };
 
-export const readSupplierBukkuContactCode = async (supplier_id: string): Promise<BukkuSuppliers> => {
+export const readSupplierBukkuContactCode = async (supplier_id: number): Promise<BukkuSuppliers> => {
     const pool = await getPool();
     const query = `SELECT * FROM bukku_suppliers WHERE supplier_id = '${supplier_id}'`;
     const result = await pool.query(query);
     return result.recordset[0];
 };
 
-export const insertSupplierContactCode = async (supplier_id: string, contact_code: string): Promise<BukkuSuppliers> => {
+export const insertSupplierContactCode = async (supplier_id: number, contact_code: string): Promise<BukkuSuppliers> => {
     const pool = await getPool();
     const transaction = new sql.Transaction(pool);
     try {

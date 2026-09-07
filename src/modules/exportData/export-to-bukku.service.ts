@@ -33,7 +33,7 @@ export const previewBukkuSuppliers = async (filter?: Partial<SupplierTypes.Suppl
     const suppliers = await supplierRepo.listSuppliers(filter, sqlClauseOptions, search) as supplierRepo.ListSupplierResult[];
     let contactCodes = await readAllSupplierBukkuContactCodes();
     try {
-        const supplierIDs = suppliers.flatMap(s => s.supplier_id);
+        const supplierIDs = suppliers.flatMap(s => s.id);
         if (contactCodes === undefined || contactCodes.length !== suppliers.length) {
             const noContactCodes = contactCodes === undefined ?
                 supplierIDs :
@@ -55,7 +55,7 @@ export const previewBukkuSuppliers = async (filter?: Partial<SupplierTypes.Suppl
 
     const previewData = suppliers.map(supplier => ({
         _: "",
-        contact_code: contactCodes.find(c => c.supplier_id === supplier.supplier_id)!.contact_code,
+        contact_code: contactCodes.find(c => c.supplier_id === supplier.id)!.contact_code,
         legal_name: supplier.supplier_name,
         reg_no_type: supplier.supplier_id_type,
         reg_no: supplier.supplier_id,
@@ -102,7 +102,7 @@ export const previewBukkuPurchasesBill = async (filter?: Partial<PurchasesTypes.
         throw err;
     }
 
-    const supplierMap = new Map<string, string>();
+    const supplierMap = new Map<number, string>();
     supplierIDs.forEach(async (id) => {
         const name = await supplierRepo.readSupplierName(id);
         if (name) {
@@ -174,11 +174,11 @@ export const previewBukkuBuyers = async (filter?: Partial<BuyerTypes.Buyer>, sql
     const buyers = await buyerRepo.listBuyers(filter, sqlClauseOptions, search) as buyerRepo.ListBuyerResult[];
     let contactCodes = await readAllBuyerBukkuContactCodes();
     try {
-        const buyerIDs = buyers.flatMap(b => b.buyer_id);
+        const buyerIDs = buyers.flatMap(b => b.id);
         if (contactCodes === undefined || contactCodes.length !== buyers.length) {
             const noContactCodes = contactCodes === undefined ?
                 buyerIDs :
-                buyerIDs.filter(s => !contactCodes.flatMap(c => c.buyer_id).includes(s));
+                buyerIDs.filter(b => !contactCodes.flatMap(c => c.buyer_id).includes(b));
 
             for (const row of noContactCodes) {
                 await assignBuyerBukkuContactCode(row);
@@ -196,7 +196,7 @@ export const previewBukkuBuyers = async (filter?: Partial<BuyerTypes.Buyer>, sql
 
     const previewData = buyers.map(buyer => ({
         _: "",
-        contact_code: contactCodes.find(c => c.buyer_id === buyer.buyer_id)!.contact_code,
+        contact_code: contactCodes.find(c => c.buyer_id === buyer.id)!.contact_code,
         legal_name: buyer.buyer_name,
         reg_no_type: buyer.buyer_id_type,
         reg_no: buyer.buyer_id,
@@ -244,7 +244,7 @@ export const previewBukkuSalesBill = async (filter?: Partial<SalesTypes.SalesTra
         throw err;
     }
 
-    const buyerMap = new Map<string, string>();
+    const buyerMap = new Map<number, string>();
     buyerIDs.forEach(async (id) => {
         const name = await buyerRepo.readBuyerName(id);
         if (name) {
@@ -312,7 +312,7 @@ export const exportBukkuSuppliersXlsx = async (filter?: Partial<SupplierTypes.Su
     const suppliers = await supplierRepo.listSuppliers(filter, sqlClauseOptions, search) as supplierRepo.ListSupplierResult[];
     let contactCodes = await readAllSupplierBukkuContactCodes();
     try {
-        const supplierIDs = suppliers.flatMap(s => s.supplier_id);
+        const supplierIDs = suppliers.flatMap(s => s.id);
         if (contactCodes === undefined || contactCodes.length !== suppliers.length) {
             const noContactCodes = contactCodes === undefined ?
                 supplierIDs :
@@ -339,7 +339,7 @@ export const exportBukkuSuppliersXlsx = async (filter?: Partial<SupplierTypes.Su
     ];
 
     const payload: BukkuContactsExportTemplate[] = suppliers.map(supplier => ({
-        contact_code: contactCodes.find(c => c.supplier_id === supplier.supplier_id)!.contact_code,
+        contact_code: contactCodes.find(c => c.supplier_id === supplier.id)!.contact_code,
         legal_name: supplier.supplier_name,
         reg_no_type: supplier.supplier_id_type,
         reg_no: supplier.supplier_id,
@@ -377,7 +377,7 @@ export const exportBukkuPurchasesBillXlsx = async (filter?: Partial<PurchasesTyp
         throw err;
     }
 
-    const supplierMap = new Map<string, string>();
+    const supplierMap = new Map<number, string>();
     supplierIDs.forEach(async (id) => {
         const name = await supplierRepo.readSupplierName(id);
         if (name) {
@@ -442,12 +442,11 @@ export const exportBuyersXlsx = async (filter?: Partial<BuyerTypes.Buyer>, sqlCl
     const buyers = await buyerRepo.listBuyers(filter, sqlClauseOptions, search) as buyerRepo.ListBuyerResult[];
     let contactCodes = await readAllBuyerBukkuContactCodes();
     try {
-        const buyerIDs = buyers.flatMap(s => s.buyer_id);
+        const buyerIDs = buyers.flatMap(s => s.id);
         if (contactCodes === undefined || contactCodes.length !== buyers.length) {
-            console.log(contactCodes);
             const noContactCodes = contactCodes === undefined ?
                 buyerIDs :
-                buyerIDs.filter(s => !contactCodes.flatMap(c => c.buyer_id).includes(s));
+                buyerIDs.filter(b => !contactCodes.flatMap(c => c.buyer_id).includes(b));
 
             for (const row of noContactCodes) {
                 await assignBuyerBukkuContactCode(row);
@@ -471,7 +470,7 @@ export const exportBuyersXlsx = async (filter?: Partial<BuyerTypes.Buyer>, sqlCl
     ];
 
     const payload: BukkuContactsExportTemplate[] = buyers.map(buyer => ({
-        contact_code: contactCodes.find(c => c.buyer_id === buyer.buyer_id)!.contact_code,
+        contact_code: contactCodes.find(c => c.buyer_id === buyer.id)!.contact_code,
         legal_name: buyer.buyer_name,
         reg_no_type: buyer.buyer_id_type,
         reg_no: buyer.buyer_id,
@@ -510,7 +509,7 @@ export const exportBukkuSalesBillXlsx = async (filter?: Partial<SalesTypes.Sales
         throw err;
     }
 
-    const buyerMap = new Map<string, string>();
+    const buyerMap = new Map<number, string>();
     buyerIDs.forEach(async (id) => {
         const name = await buyerRepo.readBuyerName(id);
         if (name) {
@@ -596,12 +595,12 @@ export const readAllBuyerBukkuContactCodes = async () => {
     return result;
 };
 
-export const readBuyerBukkuContactCode = async (buyer_id: string) => {
+export const readBuyerBukkuContactCode = async (buyer_id: number) => {
     const result = await bukkuRepo.readBuyerBukkuContactCode(buyer_id);
     return result;
 };
 
-export const assignBuyerBukkuContactCode = async (buyer_id: string) => {
+export const assignBuyerBukkuContactCode = async (buyer_id: number) => {
     const contact_code = await generateNextContactCode("BUYER");
     const result = await bukkuRepo.insertBuyerContactCode(buyer_id, contact_code).then(async (res) => {
         await bukkuRepo.updateLatestContactCode("BUYER", res.contact_code);
@@ -614,12 +613,12 @@ export const readAllSupplierBukkuContactCodes = async () => {
     return result;
 };
 
-export const readSupplierBukkuContactCode = async (supplier_id: string) => {
+export const readSupplierBukkuContactCode = async (supplier_id: number) => {
     const result = await bukkuRepo.readSupplierBukkuContactCode(supplier_id);
     return result;
 };
 
-export const assignSupplierBukkuContactCode = async (supplier_id: string) => {
+export const assignSupplierBukkuContactCode = async (supplier_id: number) => {
     const contact_code = await generateNextContactCode("SUPPLIER");
     const result = await bukkuRepo.insertSupplierContactCode(supplier_id, contact_code).then(async (res) => {
         await bukkuRepo.updateLatestContactCode("SUPPLIER", res.contact_code);

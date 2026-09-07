@@ -58,10 +58,10 @@ export const listPurchaseTransactions = async (filter?: Partial<PurchasesTransac
             " LEFT JOIN (" +
             " SELECT transact_id, SUM(item_quantity) AS total_quantity FROM purchases_transactions_details GROUP BY transact_id" +
             " ) AS D ON P.transact_id = D.transact_id" +
-            " LEFT JOIN master_supplier AS S ON P.supplier_id = S.supplier_id" +
+            " LEFT JOIN master_supplier AS S ON P.supplier_id = S.id" +
             " LEFT JOIN (" +
             " SELECT supplier_id, STRING_AGG(plate_no, ', ') AS plate_no FROM supplier_vehicles GROUP BY supplier_id" +
-            " ) AS V ON P.supplier_id = V.supplier_id";
+            " ) AS V ON S.id = V.supplier_id";
 
         sqlClauseOptions = {
             ...sqlClauseOptions,
@@ -72,8 +72,8 @@ export const listPurchaseTransactions = async (filter?: Partial<PurchasesTransac
         const data = (await pool.query(baseQuery)).recordset as PurchasesTransactionListResult[];
 
         let totalCountQuery = "SELECT COUNT(DISTINCT(P.transact_id)) AS total_count FROM purchases_transactions AS P" +
-            " LEFT JOIN master_supplier AS S ON P.supplier_id = S.supplier_id" +
-            " LEFT JOIN supplier_vehicles AS V ON P.supplier_id = V.supplier_id";
+            " LEFT JOIN master_supplier AS S ON S.id = P.supplier_id" +
+            " LEFT JOIN supplier_vehicles AS V ON S.id = V.supplier_id";
         totalCountQuery += await gh.buildSqlConditions({}, {
             ...sqlClauseOptions,
             sort: undefined,
@@ -278,6 +278,7 @@ export const readFullPurchaseDetails = async (filter?: Partial<PurchasesTransact
                 },
                 details: [],
                 supplier: {
+                    id: row.id,
                     supplier_id: row.supplier_id,
                     supplier_id_type: row.supplier_id_type,
                     supplier_name: row.supplier_name,
