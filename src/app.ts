@@ -6,7 +6,6 @@ import buyerRoutes from './modules/clients/buyer/buyer.routes';
 import purchasesRoutes from './modules/transactions/purchases/purchases.routes';
 import salesRoutes from './modules/transactions/sales/sales.routes';
 import transactionSettingsRoutes from './modules/transactions/settings/transaction-settings.routes';
-import apiCallTestRoutes from './modules/generalTests/apiCallTest';
 import exportDataRoutes from './modules/exportData/export-data.routes';
 import reportRoutes from './modules/reports/reports.routes';
 import expensesRecordRoutes from './modules/expenses/expenses.routes';
